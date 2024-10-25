@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject HttpClient Http
+@inject IJSRuntime JsRuntime
 
 <Layout>
     <head>
@@ -71,15 +72,28 @@
 
     private async Task LoginTask()
     {
+        if (UserEmail == null || Password == null)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "邮箱或密码不能为空！");
+            return;
+        }
+
         var data = new
         {
             email = UserEmail,
-            password=Password
+            password = Password
         };
         var jsonContent = JsonContent.Create(data);
         var httpResponseMessage= await Http.PostAsync("http://localhost:5013/ApiGateWay/Account/Login", jsonContent);
-        var responseBody = await httpResponseMessage.Content.ReadAsStringAsync();
-        
-    }
+        var tokenMsg = await httpResponseMessage.Content.ReadAsStringAsync();
 
+        if ((int)(httpResponseMessage.StatusCode)!=200)
+        {
+            await JsRuntime.InvokeVoidAsync("alert", tokenMsg);
+        }
+        else
+        {
+            await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
+        }
+    }
 }
