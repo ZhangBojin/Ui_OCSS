@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
 
 <Layout>
     <head>
@@ -56,7 +57,7 @@
                     </div>
                     <div>
                         <Button Type="@ButtonType.Primary" OnClick="LoginTask">登录</Button>
-                        <Button Type="@ButtonType.Primary">注册</Button>
+                        <Button Type="@ButtonType.Primary" OnClick="Register">注册</Button>
                     </div>
                 </div>
             </div>
@@ -94,6 +95,12 @@
         else
         {
             await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
+            Navigation.NavigateTo("/Home");
         }
+    }
+
+    private async Task Register()
+    {
+        await JsRuntime.InvokeVoidAsync("alert", "无注册权限！请联系管理员！");
     }
 }
