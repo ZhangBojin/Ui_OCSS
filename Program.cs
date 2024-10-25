@@ -8,6 +8,8 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddAntDesign();
 
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

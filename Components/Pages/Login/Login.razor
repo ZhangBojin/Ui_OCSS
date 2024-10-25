@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject HttpClient Http
 
 <Layout>
     <head>
@@ -27,7 +28,7 @@
             cursor: pointer;
             transition: all .3s;
             }
-    </style>
+        </style>
     </head>
     <Content>
         <div class="body">
@@ -43,15 +44,18 @@
                         </Input>
                     </div>
                     <div style="width:15%;margin-bottom:5px;">
-                        <InputPassword Placeholder="请输入密码" ShowPassword="false" VisibilityToggle="false" @bind-Value="@Password">
+                        <InputPassword Placeholder="请输入密码" 
+                        ShowPassword="false" 
+                        VisibilityToggle="false"
+                        @bind-Value="@Password">
                             <Prefix>
                                 <Icon Type="lock" Theme="outline" />
                             </Prefix>
                         </InputPassword>
                     </div>
                     <div>
-                        <Button Type="primary" OnClick="LoginTask">登录</Button>
-                        <Button Type="primary">注册</Button>
+                        <Button Type="@ButtonType.Primary" OnClick="LoginTask">登录</Button>
+                        <Button Type="@ButtonType.Primary">注册</Button>
                     </div>
                 </div>
             </div>
@@ -65,8 +69,17 @@
     private string? UserEmail { get; set; }
     private string? Password { get; set; }
 
-    private void  LoginTask()
+    private async Task LoginTask()
     {
-        Console.WriteLine("11111111111111");
+        var data = new
+        {
+            email = UserEmail,
+            password=Password
+        };
+        var jsonContent = JsonContent.Create(data);
+        var httpResponseMessage= await Http.PostAsync("http://localhost:5013/ApiGateWay/Account/Login", jsonContent);
+        var responseBody = await httpResponseMessage.Content.ReadAsStringAsync();
+        
     }
+
 }
