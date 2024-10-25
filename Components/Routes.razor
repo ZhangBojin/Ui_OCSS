@@ -1,0 +1,15 @@
+﻿@using Ui_OCSS.Components.Pages.Login
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        @if (routeData.PageType == typeof(Login))
+        {
+            <RouteView RouteData="routeData" DefaultLayout="null" />
+        }
+        else
+        {
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        }
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+<AntContainer />

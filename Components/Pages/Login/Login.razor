@@ -1,0 +1,72 @@
+﻿@page "/"
+
+<Layout>
+    <head>
+        <style>
+            .body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* 使页面充满整个视口 */
+            background: linear-gradient(to bottom, #0c2263, #3a0647);
+            }
+            .section {
+            flex: 1; /* 默认比例 */
+            }
+            .section-1 {
+            flex: 1; /* 比例为 1 */
+            }
+            .section-2 {
+            flex: 3; /* 比例为 3 */
+            }
+            .section-3 {
+            flex: 1; /* 比例为 1 */
+            }
+            .custom-password-icon {
+            color: rgba(0,0,0,.45);
+            cursor: pointer;
+            transition: all .3s;
+            }
+    </style>
+    </head>
+    <Content>
+        <div class="body">
+            <div class="section section-1"></div>
+            <div class="section section-2">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
+                    <label style="color:white;font-size:xx-large">OCSS_选课系统</label>
+                    <div style="width:15%;margin-bottom:5px;">
+                        <Input Placeholder="请输入邮箱" Size="@InputSize.Default" @bind-Value="@UserEmail">
+                            <Prefix>
+                                <Icon Type="user" />
+                            </Prefix>
+                        </Input>
+                    </div>
+                    <div style="width:15%;margin-bottom:5px;">
+                        <InputPassword Placeholder="请输入密码" ShowPassword="false" VisibilityToggle="false" @bind-Value="@Password">
+                            <Prefix>
+                                <Icon Type="lock" Theme="outline" />
+                            </Prefix>
+                        </InputPassword>
+                    </div>
+                    <div>
+                        <Button Type="primary" OnClick="LoginTask">登录</Button>
+                        <Button Type="primary">注册</Button>
+                    </div>
+                </div>
+            </div>
+            <div class="section section-3"></div>
+        </div>
+    </Content>
+</Layout>
+
+
+@code {
+    private string? UserEmail { get; set; }
+    private string? Password { get; set; }
+
+    private void  LoginTask()
+    {
+        Console.WriteLine("11111111111111");
+    }
+}
