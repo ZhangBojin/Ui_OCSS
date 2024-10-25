@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Ui_OCSS.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddAntDesign();
 
 builder.Services.AddHttpClient();
+
+builder.Services.AddBlazoredLocalStorage();
 
 var app = builder.Build();
 

@@ -1,7 +1,9 @@
 ﻿@page "/"
+@using Blazored.LocalStorage
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
 @inject NavigationManager Navigation
+@inject ILocalStorageService localStorage
 
 <Layout>
     <head>
@@ -95,6 +97,9 @@
         else
         {
             await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
+
+            await localStorage.SetItemAsync("jwtToken", tokenMsg);
+            //var a = await localStorage.GetItemAsync<string>("jwtToken");
             Navigation.NavigateTo("/Home");
         }
     }
