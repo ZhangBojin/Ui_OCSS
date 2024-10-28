@@ -11,9 +11,9 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         
-        @if (navItems != null)
+        @if (_navItems != null)
         {
-            foreach (var item in navItems)
+            foreach (var item in _navItems)
             {
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="@item.Href">
@@ -34,13 +34,13 @@
 
 @code 
 {
-    private List<NavItem>? navItems;
+    private List<NavItem>? _navItems;
 
     protected override async Task OnInitializedAsync()
     {
         Http.BaseAddress = new Uri("http://localhost:5246/");
         var json = await Http.GetStringAsync("Test_Nav.json");
-        navItems = System.Text.Json.JsonSerializer.Deserialize<List<NavItem>>(json)!;
+        _navItems = System.Text.Json.JsonSerializer.Deserialize<List<NavItem>>(json)!;
     }
 
     private class NavItem
