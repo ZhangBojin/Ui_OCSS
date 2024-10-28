@@ -5,13 +5,18 @@
     "Icon": "bi bi-house-door-fill-nav-menu"
   },
   {
-    "Href": "/counter",
-    "Name": "关于我们",
-    "Icon": "bi bi-plus-square-fill-nav-menu"
+    "Href": "/Admin/Teachers",
+    "Name": "教师服务",
+    "Icon": "bi bi-person-lines-fill"
   },
   {
-    "Href": "/weather",
-    "Name": "联系我们",
-    "Icon": "bi bi-list-nested-nav-menu"
+    "Href": "/Admin/Students",
+    "Name": "学生服务",
+    "Icon": "bi bi-person-lines-fill"
+  },
+  {
+    "Href": "/Admin/Course",
+    "Name": "课程服务",
+    "Icon": "bi bi-book"
   }
 ]
