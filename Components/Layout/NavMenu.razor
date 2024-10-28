@@ -1,6 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject HttpClient Http
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Ui_OCSS</a>
+        <a class="navbar-brand" href="Home">OCSS  选课系统</a>
     </div>
 </div>
 
@@ -8,23 +10,44 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Home" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+        
+        @if (navItems != null)
+        {
+            foreach (var item in navItems)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="@item.Href">
+                        <span class="@item.Icon" aria-hidden="true"></span> @item.Name
+                    </NavLink>
+                </div>
+            }
+        }
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+        @* <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Home">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> 主页
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+        *@
     </nav>
 </div>
+
+@code 
+{
+    private List<NavItem>? navItems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri("http://localhost:5246/");
+        var json = await Http.GetStringAsync("Test_Nav.json");
+        navItems = System.Text.Json.JsonSerializer.Deserialize<List<NavItem>>(json)!;
+    }
+
+    private class NavItem
+    {
+        public required string Href { get; set; }
+        public required string Name { get; set; }
+        public required string Icon { get; set; }
+    }
+}
 
