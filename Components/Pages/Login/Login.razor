@@ -12,20 +12,25 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            height: 100vh; /* 使页面充满整个视口 */
+            /* 使页面充满整个视口 */
+            height: 100vh; 
             background: linear-gradient(to bottom, #0c2263, #3a0647);
             }
             .section {
-            flex: 1; /* 默认比例 */
+                /* 默认比例 */
+            flex: 1; 
             }
             .section-1 {
-            flex: 1; /* 比例为 1 */
+                /* 比例为 1 */
+            flex: 1; 
             }
             .section-2 {
-            flex: 3; /* 比例为 3 */
+                /* 比例为 3 */
+            flex: 3;
             }
             .section-3 {
-            flex: 1; /* 比例为 1 */
+                /* 比例为 1 */
+            flex: 1; 
             }
             .custom-password-icon {
             color: rgba(0,0,0,.45);
@@ -86,21 +91,30 @@
             email = UserEmail,
             password = Password
         };
+
         var jsonContent = JsonContent.Create(data);
-        var httpResponseMessage= await Http.PostAsync("http://localhost:5013/ApiGateWay/Account/Login", jsonContent);
-        var tokenMsg = await httpResponseMessage.Content.ReadAsStringAsync();
 
-        if ((int)(httpResponseMessage.StatusCode)!=200)
+        try
         {
-            await JsRuntime.InvokeVoidAsync("alert", tokenMsg);
+            var httpResponseMessage = await Http.PostAsync("http://localhost:5013/ApiGateWay/Account/Login", jsonContent);
+            var tokenMsg = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            if ((int)(httpResponseMessage.StatusCode)!=200)
+            {
+                await JsRuntime.InvokeVoidAsync("alert", tokenMsg);
+            }
+            else
+            {
+                await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
+
+                await localStorage.SetItemAsync("jwtToken", tokenMsg);
+                //var a = await localStorage.GetItemAsync<string>("jwtToken");
+                Navigation.NavigateTo("/Home");
+            }
         }
-        else
+        catch (Exception e)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
-
-            await localStorage.SetItemAsync("jwtToken", tokenMsg);
-            //var a = await localStorage.GetItemAsync<string>("jwtToken");
-            Navigation.NavigateTo("/Home");
+            await JsRuntime.InvokeVoidAsync("alert", "服务器暂未开放，请联系管理员");
         }
     }
 

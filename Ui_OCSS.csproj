@@ -11,4 +11,9 @@
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Components\Pages\Teachers\" />
+    <Folder Include="Components\Pages\Students\" />
+  </ItemGroup>
+
 </Project>
