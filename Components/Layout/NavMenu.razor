@@ -1,4 +1,4 @@
-﻿@inject HttpClient Http
+﻿@inject MenuService MenuService
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -36,18 +36,10 @@
 {
     private List<NavItem>? _navItems;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
-        Http.BaseAddress = new Uri("http://localhost:5246/");
-        var json = await Http.GetStringAsync("Test_Nav.json");
-        _navItems = System.Text.Json.JsonSerializer.Deserialize<List<NavItem>>(json)!;
-    }
-
-    private class NavItem
-    {
-        public required string Href { get; set; }
-        public required string Name { get; set; }
-        public required string Icon { get; set; }
+        _navItems = MenuService.MenuItems;
+        return Task.CompletedTask;
     }
 }
 

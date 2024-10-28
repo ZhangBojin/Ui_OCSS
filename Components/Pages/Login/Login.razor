@@ -1,9 +1,13 @@
 ﻿@page "/"
+@using System.Text.Json
 @using Blazored.LocalStorage
+@using Ui_OCSS.Components.Layout
+@using MenuService = Ui_OCSS.Components.Layout.MenuService
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
 @inject NavigationManager Navigation
-@inject ILocalStorageService localStorage
+@inject ILocalStorageService LocalStorage
+@inject MenuService MenuService
 
 <Layout>
     <head>
@@ -17,19 +21,19 @@
             background: linear-gradient(to bottom, #0c2263, #3a0647);
             }
             .section {
-                /* 默认比例 */
+            /* 默认比例 */
             flex: 1; 
             }
             .section-1 {
-                /* 比例为 1 */
+            /* 比例为 1 */
             flex: 1; 
             }
             .section-2 {
-                /* 比例为 3 */
+            /* 比例为 3 */
             flex: 3;
             }
             .section-3 {
-                /* 比例为 1 */
+            /* 比例为 1 */
             flex: 1; 
             }
             .custom-password-icon {
@@ -107,9 +111,9 @@
             {
                 await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
 
-                await localStorage.SetItemAsync("jwtToken", tokenMsg);
+                await LocalStorage.SetItemAsync("jwtToken", tokenMsg);
                 //var a = await localStorage.GetItemAsync<string>("jwtToken");
-                Navigation.NavigateTo("/Home");
+                Navigation.NavigateTo(@MenuService.MenuItems[0].Href);
             }
         }
         catch (Exception e)
@@ -122,4 +126,12 @@
     {
         await JsRuntime.InvokeVoidAsync("alert", "无注册权限！请联系管理员！");
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Http.BaseAddress = new Uri("http://localhost:5246/");
+        var json = await Http.GetStringAsync("Test_Nav.json");
+        MenuService.MenuItems = JsonSerializer.Deserialize<List<NavItem>>(json)!;
+    }
+
 }

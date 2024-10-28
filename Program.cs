@@ -1,5 +1,6 @@
 using Blazored.LocalStorage;
 using Ui_OCSS.Components;
+using Ui_OCSS.Components.Layout;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,8 @@ builder.Services.AddAntDesign();
 builder.Services.AddHttpClient();
 
 builder.Services.AddBlazoredLocalStorage();
+
+builder.Services.AddSingleton<MenuService>();
 
 var app = builder.Build();
 
