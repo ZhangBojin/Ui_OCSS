@@ -109,9 +109,23 @@
             }
             else
             {
+                var jsonObject = JsonSerializer.Deserialize<JsonElement>(tokenMsg);
+
+                var token = jsonObject.GetProperty("token").GetString();
+                var menu = jsonObject.GetProperty("menu").GetRawText();
+
+                var rawItems = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(menu);
+                MenuService.MenuItems = rawItems!.Select(item => new NavItem
+                {
+                        Href = item["href"].ToString()!,
+                        Name = item["name"].ToString()!,
+                        Icon = item["icon"].ToString()!
+                }).ToList();
+
+
                 await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
 
-                await LocalStorage.SetItemAsync("jwtToken", tokenMsg);
+                await LocalStorage.SetItemAsync("jwtToken", token);
                 //var a = await localStorage.GetItemAsync<string>("jwtToken");
                 Navigation.NavigateTo(@MenuService.MenuItems[0].Href);
             }
@@ -126,12 +140,4 @@
     {
         await JsRuntime.InvokeVoidAsync("alert", "无注册权限！请联系管理员！");
     }
-
-    protected override async Task OnInitializedAsync()
-    {
-        Http.BaseAddress = new Uri("http://localhost:5246/");
-        var json = await Http.GetStringAsync("Test_Nav.json");
-        MenuService.MenuItems = JsonSerializer.Deserialize<List<NavItem>>(json)!;
-    }
-
 }
