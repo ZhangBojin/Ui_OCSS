@@ -45,7 +45,9 @@
     </head>
     <Content>
         <div class="body">
-            <div class="section section-1"></div>
+            <div class="section section-1">
+                <Spin Spinning=Loading Size="large"></Spin>
+            </div>
             <div class="section section-2">
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
                     <label style="color:white;font-size:xx-large">OCSS_选课系统</label>
@@ -81,22 +83,23 @@
 @code {
     private string? UserEmail { get; set; }
     private string? Password { get; set; }
+    private bool Loading { get; set; } = false;
 
     private async Task LoginTask()
     {
+        Toggle();
         if (UserEmail == null || Password == null)
         {
             await JsRuntime.InvokeVoidAsync("alert", "邮箱或密码不能为空！");
+            Toggle();
             return;
         }
 
-        var data = new
+        var jsonContent = JsonContent.Create(new
         {
             email = UserEmail,
             password = Password
-        };
-
-        var jsonContent = JsonContent.Create(data);
+        });
 
         try
         {
@@ -105,6 +108,7 @@
 
             if ((int)(httpResponseMessage.StatusCode)!=200)
             {
+                Toggle();
                 await JsRuntime.InvokeVoidAsync("alert", tokenMsg);
             }
             else
@@ -132,6 +136,7 @@
         }
         catch (Exception e)
         {
+            Toggle();
             await JsRuntime.InvokeVoidAsync("alert", "服务器暂未开放，请联系管理员");
         }
     }
@@ -139,5 +144,10 @@
     private async Task Register()
     {
         await JsRuntime.InvokeVoidAsync("alert", "无注册权限！请联系管理员！");
+    }
+
+    private void Toggle()
+    {
+        Loading = !Loading;
     }
 }
