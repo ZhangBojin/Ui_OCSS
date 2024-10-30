@@ -74,7 +74,7 @@
         Pagination.Total = 4;
     }
 
-    string[] _columns = ["TeacherId", "UserId","Name", "Gender", "PhoneNumber", "Title", "Department", "Joining"];
+    readonly string[] _columns = ["TeacherId", "UserId","Name", "Gender", "PhoneNumber", "Title", "Department", "Joining"];
     private List<Teacher>? _teachers;
 
     private void OnSingleCompleted(){}
