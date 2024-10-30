@@ -1,22 +1,42 @@
 [
   {
-    "Href": "/Admin/Home",
-    "Name": "主页",
-    "Icon": "bi bi-house-door-fill-nav-menu"
+    "TeacherId": "1",
+    "UserId": "001",
+    "Name": "张三",
+    "Gender": "男",
+    "PhoneNumber": "110",
+    "Title": "讲师",
+    "Department": "计软",
+    "Joining": "2019"
   },
   {
-    "Href": "/Admin/Teachers",
-    "Name": "教师服务",
-    "Icon": "bi bi-person-lines-fill"
+    "TeacherId": "2",
+    "UserId": "002",
+    "Name": "李四",
+    "Gender": "女",
+    "PhoneNumber": "120",
+    "Title": "教授",
+    "Department": "计科",
+    "Joining": "2019"
   },
   {
-    "Href": "/Admin/Students",
-    "Name": "学生服务",
-    "Icon": "bi bi-person-lines-fill"
+    "TeacherId": "3",
+    "UserId": "003",
+    "Name": "王五",
+    "Gender": "女",
+    "PhoneNumber": "119",
+    "Title": "讲师",
+    "Department": "数媒",
+    "Joining": "2023"
   },
   {
-    "Href": "/Admin/Course",
-    "Name": "课程服务",
-    "Icon": "bi bi-book"
+    "TeacherId": "4",
+    "UserId": "004",
+    "Name": "任七",
+    "Gender": "男",
+    "PhoneNumber": "112",
+    "Title": "讲师",
+    "Department": "外国语",
+    "Joining": "2023"
   }
 ]

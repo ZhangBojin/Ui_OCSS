@@ -1,19 +1,103 @@
 ﻿@page "/Admin/Teachers"
+@using System.Text.Json
 
-<div>
-    <GridRow>
-        <GridCol Span="24">
-            <PageHeader Style="background-color:pink" Class="site-page-header" Title="Teacher" Subtitle="教师信息" />
-        </GridCol>   
-    </GridRow>
-    <GridRow>
-        <GridCol Span="24" Style="height:100vh;background-color:aqua">
-
-        </GridCol>   
-    </GridRow>
-</div>
+<GridRow>
+    <GridCol Span="12">
+        <PageHeader Class="site-page-header" Title="Teacher" Subtitle="教师信息" />
+    </GridCol>   
+    <GridCol Span="12" style="display: flex; justify-content: flex-end;">
+        <a href="https://example.com/path/to/your/file.pdf" download>
+            <Button Icon="download">
+                <span>下载Excel模板</span>
+            </Button>
+        </a>
+        <Upload Action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
+        Name="files"
+        OnSingleCompleted="OnSingleCompleted">
+            <Button Icon="upload">
+                <span>Excel 批量添加</span>
+            </Button>
+        </Upload>
+    </GridCol> 
+    <GridCol Span="4">
+        <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@Pagination.TeacherId">
+            <Prefix>
+                <Icon Type="user" />
+            </Prefix>
+        </Input>
+    </GridCol>
+    <GridCol Span="2" Style="margin-left:5px">
+        <Button Type="@ButtonType.Primary">搜索</Button>
+    </GridCol>
+</GridRow>
+<GridRow>
+    <GridCol Span="24" Style="height:100vh;">
+        <Table TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
+            <ChildContent>
+                @foreach (var column in _columns)
+                {
+                    <Column TData="object" DataIndex="@column"></Column>
+                }
+                <ActionColumn Title="Action">
+                    <Space Size=@("middle")>
+                        <SpaceItem>
+                            <Button Type="@ButtonType.Primary">编辑</Button>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Button Danger Type="@ButtonType.Primary">删除</Button>
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </ChildContent>
+            <PaginationTemplate>
+                <Pagination Total="Pagination.Total"
+                            ShowSizeChanger="false"
+                            PageSize="Pagination.PageSize"
+                            Current="Pagination.Index" 
+                            OnChange="context.HandlePageChange" />
+            </PaginationTemplate>
+        </Table>
+    </GridCol>   
+</GridRow>
 
 
 @code {
+    protected override async void OnInitialized()
+    {
+        var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Test_Nav.json");
+        var jsonData = await File.ReadAllTextAsync(jsonFilePath);
+        _teachers = JsonSerializer.Deserialize<List<Teacher>>(jsonData);
+
+        Pagination.Index = 1;
+        Pagination.PageSize = 10;
+
+        Pagination.Total = 4;
+    }
+
+    string[] _columns = ["TeacherId", "UserId","Name", "Gender", "PhoneNumber", "Title", "Department", "Joining"];
+    private List<Teacher>? _teachers;
+
+    private void OnSingleCompleted(){}
+
+
+    private class Teacher
+    {
+        public string? TeacherId { get; set; }
+        public string? UserId { get; set; }
+        public string? Name { get; set; }
+        public string? Gender { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? Title { get; set; }
+        public string? Department { get; set; }
+        public string? Joining { get; set; }
+    }
+
+    private static class Pagination
+    {
+        public static int Index { get; set; }
+        public static int Total { get; set; }
+        public static int PageSize { get; set; }
+        public static int? TeacherId { get; set; }
+    }
 
 }
