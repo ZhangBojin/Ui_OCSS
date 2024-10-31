@@ -15,9 +15,10 @@
             <span>下载Excel模板</span>
         </Button>
         <Upload Action="@($"{Ip}/api/Teachers/UploadExcel")"
-                Name="file"
-                Accept=".xlsx"
-                Headers="@(new Dictionary<string, string> { { "Authorization", "Bearer " + @Token! } })">
+        Name="file"
+        OnChange="Waiting"
+        Accept=".xlsx"
+        Headers="@(new Dictionary<string, string> { { "Authorization", "Bearer " + @Token! } })">
             <Button Icon="upload">
                 <span>Excel 批量添加</span>
             </Button>
@@ -65,6 +66,15 @@
 </GridRow>
 
 
+@if (_isUploading)
+{
+    <div class="overlay">
+        <div class="loading-message">
+            <Spin size="large" />耐心等待上传...
+        </div>
+    </div>
+}
+
 @code {
     protected override async void OnInitialized()
     {
@@ -85,6 +95,7 @@
     private List<Teacher>? _teachers;
     private string? Token { get; set; }
     private string? Ip { get; set; }
+    private bool _isUploading = false;
 
 
     private async Task DownloadTemplate()
@@ -106,6 +117,11 @@
 
             Navigation.NavigateTo(blobUrl, true);
         }
+    }
+
+    private void Waiting()
+    {
+        _isUploading = !_isUploading;
     }
 
     private class Teacher
