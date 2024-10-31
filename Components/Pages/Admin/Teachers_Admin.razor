@@ -14,9 +14,10 @@
         <Button Icon="download" OnClick="DownloadTemplate">
             <span>下载Excel模板</span>
         </Button>
-        <Upload Action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
-        Name="files"
-        OnSingleCompleted="OnSingleCompleted">
+        <Upload Action="@($"{Ip}/api/Teachers/UploadExcel")"
+                Name="file"
+                Accept=".xlsx"
+                Headers="@(new Dictionary<string, string> { { "Authorization", "Bearer " + @Token! } })">
             <Button Icon="upload">
                 <span>Excel 批量添加</span>
             </Button>
@@ -67,6 +68,9 @@
 @code {
     protected override async void OnInitialized()
     {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["Admin"];
+
         var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Test_Nav.json");
         var jsonData = await File.ReadAllTextAsync(jsonFilePath);
         _teachers = JsonSerializer.Deserialize<List<Teacher>>(jsonData);
@@ -79,16 +83,15 @@
 
     readonly string[] _columns = ["TeacherId", "UserId","Name", "Gender", "PhoneNumber", "Title", "Department", "Joining"];
     private List<Teacher>? _teachers;
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
 
-    private void OnSingleCompleted(){}
 
     private async Task DownloadTemplate()
     {
-        var token = await LocalStorage.GetItemAsync<string>("jwtToken");
-        var ip = Configuration.GetSection("Ip")["Admin"];
-        var url = $"{ip}/api/Teachers/DownloadTemplate";
+        var url = $"{Ip}/api/Teachers/DownloadTemplate";
         using var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
         var response = await client.GetAsync(url);
 
