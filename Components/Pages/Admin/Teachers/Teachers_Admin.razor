@@ -6,6 +6,7 @@
 @inject ILocalStorageService LocalStorage
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
 
 <GridRow>
     <GridCol Span="12">
@@ -39,7 +40,7 @@
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
         <Table  TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
-            <ChildContent>
+            <ChildContent Context="data">
                 @foreach (var column in _columns)
                 {
                     <Column TData="object" DataIndex="@column"></Column>
@@ -47,10 +48,10 @@
                 <ActionColumn Title="Action">
                     <Space Size=@("middle")>
                         <SpaceItem>
-                            <Button Type="@ButtonType.Primary">编辑</Button>
+                            <Button Icon="edit" Type="@ButtonType.Primary" @onclick="_=>Open(data)">编辑</Button>
                         </SpaceItem>
                         <SpaceItem>
-                            <Button Danger Type="@ButtonType.Primary">删除</Button>
+                            <Button Icon="delete" Danger Type="@ButtonType.Primary">删除</Button>
                         </SpaceItem>
                     </Space>
                 </ActionColumn>
@@ -66,6 +67,54 @@
     </GridCol>   
 </GridRow>
 
+
+<Drawer Closable="true" Width="720" Visible="_isSee" Title='("修改信息")' OnClose="_=>Close()">
+    <Template style="height:90%">
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>姓名</Text>
+                <Input Disabled="true"  @bind-Value="@EditClass.name"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>性别</Text>
+                <Input  @bind-Value="@EditClass.gender"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>邮箱</Text>
+                <Input Disabled="true"  @bind-Value="@EditClass.email"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>电话</Text>
+                <Input @bind-Value="@EditClass.phoneNumber"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>职称</Text>
+                <Input @bind-Value="@EditClass.title"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>所属学院</Text>
+                <Input  @bind-Value="@EditClass.department"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+
+        <Row>
+            <AntDesign.Col Span="18">
+
+            </AntDesign.Col>
+            <AntDesign.Col Span="6">
+                <Button Type="default" @onclick="_=>Close()">取消</Button>
+                <Button Type="primary" @onclick="_=>Edit()">提交</Button>
+            </AntDesign.Col>
+        </Row>
+    </Template>
+</Drawer>
 
 @if (_isUploading)
 {
@@ -141,12 +190,66 @@
         await TableInit(response);
     }
 
-    readonly string[] _columns = ["TeacherId", "UserId", "Name", "Gender", "PhoneNumber", "Title", "Department", "Joining"];
+    void Open(Teacher teacher)
+    {
+        EditClass.id = teacher.teacherId;
+        EditClass.name = teacher.name;
+        EditClass.gender = teacher.gender;
+        EditClass.email = teacher.email;
+        EditClass.phoneNumber = teacher.phoneNumber;
+        EditClass.title = teacher.title;
+        EditClass.department = teacher.department;
+
+        this._isSee = true;
+    }
+
+    void Close()
+    {
+        EditClass.id = null;
+        EditClass.name = null;
+        EditClass.gender = null;
+        EditClass.email = null;
+        EditClass.phoneNumber = null;
+        EditClass.title = null;
+        EditClass.department = null;
+        this._isSee = false;
+    }
+
+    private async Task Edit()
+    {
+        var url = $"{Ip}/api/Teachers/EditTeachers";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var teacher = new
+        {
+            id = EditClass.id,
+            gender = EditClass.gender,
+            phoneNumber = EditClass.phoneNumber,
+            title = EditClass.title,
+            department = EditClass.department
+        };
+        var json = JsonSerializer.Serialize(teacher);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync(url, content);
+
+        if (response.IsSuccessStatusCode)
+        { 
+            await JsRuntime.InvokeVoidAsync("alert", "修改成功！");
+            Close();
+            await GetTecherInfo();
+        }
+    }
+
+
+    readonly string[] _columns = ["TeacherId", "Name", "Gender", "Email", "PhoneNumber", "Title", "Department", "Joining"];
 
     private List<Teacher>? _teachers;
     private string? Token { get; set; }
     private string? Ip { get; set; }
     private bool _isUploading = false;
+    private bool _isSee { get; set; } = false;
 
     private class Teacher
     {
@@ -174,5 +277,16 @@
     {
         public List<Teacher> lsTeacherInfos { get; init; }
         public int total { get; init; }
+    }
+
+    private static class EditClass
+    {
+        public static int? id { get; set; }
+        public static string? name { get; set; }
+        public static string? gender { get; set; }
+        public static string? email { get; set; }
+        public static long? phoneNumber { get; set; }
+        public static string? title { get; set; }
+        public static string? department { get; set; }
     }
 }
