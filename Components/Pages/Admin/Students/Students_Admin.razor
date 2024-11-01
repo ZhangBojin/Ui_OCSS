@@ -1,4 +1,5 @@
-﻿@page "/Admin/Teachers"
+﻿@page "/Admin/Students"
+
 @using System.Net.Http.Headers
 @using System.Text
 @using System.Text.Json
@@ -10,27 +11,27 @@
 
 <GridRow>
     <GridCol Span="12">
-        <PageHeader Class="site-page-header" Title="Teachers" Subtitle="教师信息" />
-    </GridCol>   
+        <PageHeader Class="site-page-header" Title="Students" Subtitle="学生信息" />
+    </GridCol>
     <GridCol Span="12" style="display: flex; justify-content: flex-end;">
         <Button Icon="download" OnClick="DownloadTemplate">
             <span>下载Excel模板</span>
         </Button>
-        <Upload Action="@($"{Ip}/api/Teachers/UploadExcel")"
-        Name="file"
-        OnChange="Waiting"
-        Accept=".xlsx"
-        Headers="@(new Dictionary<string, string> { { "Authorization", "Bearer " + @Token! } })">
+        <Upload Action="@($"{Ip}/api/Students/UploadExcel")"
+                Name="file"
+                OnChange="Waiting"
+                Accept=".xlsx"
+                Headers="@(new Dictionary<string, string> { { "Authorization", "Bearer " + @Token! } })">
             <Button Icon="upload">
                 <span>Excel 批量添加</span>
             </Button>
         </Upload>
-    </GridCol> 
+    </GridCol>
     <GridCol Span="4">
         <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@Pagination.TeacherId">
-            <Prefix>
-                <Icon Type="user" />
-            </Prefix>
+        <Prefix>
+            <Icon Type="user" />
+        </Prefix>
         </Input>
     </GridCol>
     <GridCol Span="2" Style="margin-left:5px">
@@ -39,7 +40,7 @@
 </GridRow>
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
-        <Table  TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
+        <Table TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
             <ChildContent Context="data">
                 @foreach (var column in _columns)
                 {
@@ -60,13 +61,13 @@
             </ChildContent>
             <PaginationTemplate>
                 <Pagination Total="Pagination.Total"
-                ShowSizeChanger="false"
-                PageSize="Pagination.PageSize"
-                Current="Pagination.Index"
-                OnChange="Callback"/>
+                            ShowSizeChanger="false"
+                            PageSize="Pagination.PageSize"
+                            Current="Pagination.Index"
+                            OnChange="Callback" />
             </PaginationTemplate>
         </Table>
-    </GridCol>   
+    </GridCol>
 </GridRow>
 
 
@@ -75,18 +76,18 @@
         <Row Gutter="16">
             <AntDesign.Col Span="12">
                 <Text>姓名</Text>
-                <Input Disabled="true"  @bind-Value="@EditClass.name"></Input>
+                <Input Disabled="true" @bind-Value="@EditClass.name"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
                 <Text>性别</Text>
-                <Input  @bind-Value="@EditClass.gender"></Input>
+                <Input @bind-Value="@EditClass.gender"></Input>
             </AntDesign.Col>
         </Row>
         <br />
         <Row Gutter="16">
             <AntDesign.Col Span="12">
                 <Text>邮箱</Text>
-                <Input Disabled="true"  @bind-Value="@EditClass.email"></Input>
+                <Input Disabled="true" @bind-Value="@EditClass.email"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
                 <Text>电话</Text>
@@ -101,7 +102,7 @@
             </AntDesign.Col>
             <AntDesign.Col Span="12">
                 <Text>所属学院</Text>
-                <Input  @bind-Value="@EditClass.department"></Input>
+                <Input @bind-Value="@EditClass.department"></Input>
             </AntDesign.Col>
         </Row>
         <br />
@@ -137,7 +138,7 @@
 
     private async Task DownloadTemplate()
     {
-        var url = $"{Ip}/api/Teachers/DownloadTemplate";
+        var url = $"{Ip}/api/Students/DownloadTemplate";
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
@@ -244,7 +245,7 @@
         var response = await client.PostAsync(url, content);
 
         if (response.IsSuccessStatusCode)
-        { 
+        {
             config1.Content = "处理成功!";
             config1.Duration = 1;
             await _message.Success(config1);
@@ -277,17 +278,17 @@
     private bool _isSee { get; set; } = false;
 
     MessageConfig config = new MessageConfig()
-    {
+        {
             Content = "加载数据中...",
             Key = $"updatable-{DateTime.Now.Ticks}"
-    };
+        };
 
     MessageConfig config1 = new MessageConfig()
-    {
-        Content = "处理中...",
-        Key = $"updatable-{DateTime.Now.Ticks}"
-    };
-    
+        {
+            Content = "处理中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
 
     private class Teacher
     {
