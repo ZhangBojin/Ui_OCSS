@@ -4,7 +4,7 @@
 @using Ui_OCSS.Components.Layout
 @using MenuService = Ui_OCSS.Components.Layout.MenuService
 @inject HttpClient Http
-@inject IJSRuntime JsRuntime
+@inject IMessageService _message
 @inject NavigationManager Navigation
 @inject ILocalStorageService LocalStorage
 @inject MenuService MenuService
@@ -91,7 +91,7 @@
         Toggle();
         if (UserEmail == null || Password == null)
         {
-            await JsRuntime.InvokeVoidAsync("alert", "邮箱或密码不能为空！");
+            await _message.Error("邮箱或密码不能为空！");
             Toggle();
             return;
         }
@@ -111,7 +111,7 @@
             if ((int)(httpResponseMessage.StatusCode)!=200)
             {
                 Toggle();
-                await JsRuntime.InvokeVoidAsync("alert", tokenMsg);
+                await _message.Error(tokenMsg);
             }
             else
             {
@@ -129,7 +129,7 @@
                 }).ToList();
 
 
-                await JsRuntime.InvokeVoidAsync("alert", "登录成功！");
+                await _message.Success("登录成功！");
 
                 await LocalStorage.SetItemAsync("jwtToken", token);
                 //var a = await localStorage.GetItemAsync<string>("jwtToken");
@@ -139,13 +139,15 @@
         catch (Exception e)
         {
             Toggle();
-            await JsRuntime.InvokeVoidAsync("alert", "服务器暂未开放，请联系管理员");
+            await _message.Error("服务器暂未开放，请联系管理员！");
+
         }
     }
 
     private async Task Register()
     {
-        await JsRuntime.InvokeVoidAsync("alert", "无注册权限！请联系管理员！");
+        await _message.Error("无注册权限！请联系管理员！");
+
     }
 
     private void Toggle()

@@ -6,7 +6,7 @@
 @inject ILocalStorageService LocalStorage
 @inject IConfiguration Configuration
 @inject NavigationManager Navigation
-@inject IJSRuntime JsRuntime
+@inject IMessageService _message
 
 <GridRow>
     <GridCol Span="12">
@@ -165,6 +165,10 @@
         var teacherResponse = JsonSerializer.Deserialize<ResponseModel>(jsonResponse);
         _teachers = teacherResponse!.lsTeacherInfos;
         Pagination.Total = teacherResponse.total;
+
+        config.Content = "加载成功！";
+        config.Duration = 1;
+        await _message.Success(config);
         StateHasChanged();
     }
     private async Task Callback(PaginationEventArgs obj)
@@ -175,6 +179,8 @@
 
     private async Task GetTecherInfo()
     {
+        _message.Loading(config);
+
         var url = $"{Ip}/api/Teachers/GetTeachers";
 
         using var httpClient = new HttpClient();
@@ -217,6 +223,7 @@
 
     private async Task Edit()
     {
+        _message.Loading(config1);
         var url = $"{Ip}/api/Teachers/EditTeachers";
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
@@ -236,7 +243,9 @@
 
         if (response.IsSuccessStatusCode)
         { 
-            await JsRuntime.InvokeVoidAsync("alert", "修改成功！");
+            config1.Content = "修改成功!";
+            config1.Duration = 1;
+            await _message.Success(config1);
             Close();
             await GetTecherInfo();
         }
@@ -250,6 +259,19 @@
     private string? Ip { get; set; }
     private bool _isUploading = false;
     private bool _isSee { get; set; } = false;
+
+    MessageConfig config = new MessageConfig()
+    {
+            Content = "加载数据中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+    };
+
+    MessageConfig config1 = new MessageConfig()
+    {
+        Content = "修改中...",
+        Key = $"updatable-{DateTime.Now.Ticks}"
+    };
+    
 
     private class Teacher
     {
