@@ -51,7 +51,9 @@
                             <Button Icon="edit" Type="@ButtonType.Primary" @onclick="_=>Open(data)">编辑</Button>
                         </SpaceItem>
                         <SpaceItem>
-                            <Button Icon="delete" Danger Type="@ButtonType.Primary">删除</Button>
+                            <Popconfirm Placement="@Placement.Bottom" Title="确定要删除吗？" OnConfirm="_=>Delete((int)data.id!)">
+                                <Button Icon="delete" Danger Type="@ButtonType.Primary">删除</Button>
+                            </Popconfirm>
                         </SpaceItem>
                     </Space>
                 </ActionColumn>
@@ -243,10 +245,24 @@
 
         if (response.IsSuccessStatusCode)
         { 
-            config1.Content = "修改成功!";
+            config1.Content = "处理成功!";
             config1.Duration = 1;
             await _message.Success(config1);
             Close();
+            await GetTecherInfo();
+        }
+    }
+
+    private async Task Delete(int id)
+    {
+        var url = $"{Ip}/api/Teachers/DeleteTeachers?id={id}";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await client.PostAsync(url, new StringContent(string.Empty));
+        if (response.IsSuccessStatusCode)
+        {
+            await _message.Success("删除成功!");
             await GetTecherInfo();
         }
     }
@@ -268,7 +284,7 @@
 
     MessageConfig config1 = new MessageConfig()
     {
-        Content = "修改中...",
+        Content = "处理中...",
         Key = $"updatable-{DateTime.Now.Ticks}"
     };
     
