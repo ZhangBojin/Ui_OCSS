@@ -16,7 +16,7 @@
         <Button Icon="download" OnClick="DownloadTemplate">
             <span>下载Excel模板</span>
         </Button>
-        <Upload Action="@($"{Ip}/api/Teachers/UploadExcel")"
+        <Upload Action="@($"{Ip}/api/Students/UploadExcel")"
         Name="file"
         OnChange="Waiting"
         Accept=".xlsx"
@@ -228,7 +228,7 @@
 
     private async Task DownloadTemplate()
     {
-        var url = $"{Ip}/api/Teachers/DownloadTemplate";
+        var url = $"{Ip}/api/Students/DownloadTemplate";
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
