@@ -1,5 +1,4 @@
 ﻿@page "/Admin/Students"
-
 @using System.Net.Http.Headers
 @using System.Text
 @using System.Text.Json
@@ -28,19 +27,19 @@
         </Upload>
     </GridCol>
     <GridCol Span="4">
-        <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@Pagination.TeacherId">
+        <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@PaginationStudent.StudentId">
         <Prefix>
             <Icon Type="user" />
         </Prefix>
         </Input>
     </GridCol>
     <GridCol Span="2" Style="margin-left:5px">
-        <Button Type="@ButtonType.Primary" OnClick="GetTecherInfo">搜索</Button>
+        <Button Type="@ButtonType.Primary" OnClick="GetStudentInfo">搜索</Button>
     </GridCol>
 </GridRow>
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
-        <Table TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
+        <Table TItem="Student" DataSource="_student" @bind-PageSize="PaginationStudent.PageSize">
             <ChildContent Context="data">
                 @foreach (var column in _columns)
                 {
@@ -60,10 +59,10 @@
                 </ActionColumn>
             </ChildContent>
             <PaginationTemplate>
-                <Pagination Total="Pagination.Total"
+                <PaginationStudent Total="PaginationStudent.Total"
                             ShowSizeChanger="false"
-                            PageSize="Pagination.PageSize"
-                            Current="Pagination.Index"
+                            PageSize="PaginationStudent.PageSize"
+                            Current="PaginationStudent.Index"
                             OnChange="Callback" />
             </PaginationTemplate>
         </Table>
@@ -133,7 +132,7 @@
     {
         Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
         Ip = Configuration.GetSection("Ip")["Admin"];
-        await GetTecherInfo();
+        await GetStudentInfo();
     }
 
     private async Task DownloadTemplate()
@@ -166,8 +165,8 @@
     {
         var jsonResponse = await msg.Content.ReadAsStringAsync();
         var teacherResponse = JsonSerializer.Deserialize<ResponseModel>(jsonResponse);
-        _teachers = teacherResponse!.lsTeacherInfos;
-        Pagination.Total = teacherResponse.total;
+        _student = teacherResponse!.lsStudentInfos;
+        PaginationStudent.Total = teacherResponse.total;
 
         config.Content = "加载成功！";
         config.Duration = 1;
@@ -176,38 +175,37 @@
     }
     private async Task Callback(PaginationEventArgs obj)
     {
-        Pagination.Index = obj.Page;
-        await GetTecherInfo();
+        PaginationStudent.Index = obj.Page;
+        await GetStudentInfo();
     }
 
-    private async Task GetTecherInfo()
+    private async Task GetStudentInfo()
     {
         _message.Loading(config);
 
-        var url = $"{Ip}/api/Teachers/GetTeachers";
+        var url = $"{Ip}/api/Students/GetStudents";
 
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
         var jsonContent = new
         {
-            index = Pagination.Index,
-            pageSize = Pagination.PageSize,
-            teacherId = Pagination.TeacherId
+            index = PaginationStudent.Index,
+            pageSize = PaginationStudent.PageSize,
+            studentId = PaginationStudent.StudentId
         };
         var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync(url, content);
         await TableInit(response);
     }
 
-    void Open(Teacher teacher)
+    void Open(Student student)
     {
-        EditClass.id = teacher.teacherId;
-        EditClass.name = teacher.name;
-        EditClass.gender = teacher.gender;
-        EditClass.email = teacher.email;
-        EditClass.phoneNumber = teacher.phoneNumber;
-        EditClass.title = teacher.title;
-        EditClass.department = teacher.department;
+        EditClass.id = student.studentId;
+        EditClass.name = student.name;
+        EditClass.gender = student.gender;
+        EditClass.email = student.email;
+        EditClass.phoneNumber = student.phoneNumber;
+        EditClass.department = student.department;
 
         this._isSee = true;
     }
@@ -231,7 +229,7 @@
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
-        var teacher = new
+        var student = new
         {
             id = EditClass.id,
             gender = EditClass.gender,
@@ -239,7 +237,7 @@
             title = EditClass.title,
             department = EditClass.department
         };
-        var json = JsonSerializer.Serialize(teacher);
+        var json = JsonSerializer.Serialize(student);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await client.PostAsync(url, content);
@@ -250,7 +248,7 @@
             config1.Duration = 1;
             await _message.Success(config1);
             Close();
-            await GetTecherInfo();
+            await GetStudentInfo();
         }
     }
 
@@ -264,14 +262,14 @@
         if (response.IsSuccessStatusCode)
         {
             await _message.Success("删除成功!");
-            await GetTecherInfo();
+            await GetStudentInfo();
         }
     }
 
 
-    readonly string[] _columns = ["TeacherId", "Name", "Gender", "Email", "PhoneNumber", "Title", "Department", "Joining"];
+    readonly string[] _columns = ["StudentId", "Name", "Gender", "Email", "PhoneNumber", "Address", "Major", "EnrollmentStatus","Department","Joining","Status"];
 
-    private List<Teacher>? _teachers;
+    private List<Student>? _student;
     private string? Token { get; set; }
     private string? Ip { get; set; }
     private bool _isUploading = false;
@@ -290,32 +288,35 @@
         };
 
 
-    private class Teacher
+    private class Student
     {
-        public int? id { get; set; }
-        public int? teacherId { get; set; }
+        public int id { get; set; }
+        public int? studentId { get; set; }
         public int? userId { get; set; }
         public string? name { get; set; }
         public string? gender { get; set; }
         public string? email { get; set; }
         public long? phoneNumber { get; set; }
-        public string? title { get; set; }
+        public string? address { get; set; }
+        public string? major { get; set; }
+        public required string enrollmentStatus { get; set; }
         public string? department { get; set; }
-        public string? joining { get; set; }
+        public DateTime? joining { get; set; }
+        public required  string status { get; set; }
     }
 
-    private static class Pagination
+    private static class PaginationStudent
     {
         public static int Index { get; set; } = 1;
         public static int Total { get; set; }
         public static int PageSize { get; set; } = 10;
-        public static int? TeacherId { get; set; } = null;
+        public static int? StudentId { get; set; } = null;
     }
 
     private class ResponseModel
     {
-        public List<Teacher> lsTeacherInfos { get; init; }
-        public int total { get; init; }
+        public required List<Student> lsStudentInfos { get; init; }
+        public required int total { get; init; }
     }
 
     private static class EditClass
