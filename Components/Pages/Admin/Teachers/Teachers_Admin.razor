@@ -11,7 +11,7 @@
 <GridRow>
     <GridCol Span="12">
         <PageHeader Class="site-page-header" Title="Teachers" Subtitle="教师信息" />
-    </GridCol>   
+    </GridCol>
     <GridCol Span="12" style="display: flex; justify-content: flex-end;">
         <Button Icon="download" OnClick="DownloadTemplate">
             <span>下载Excel模板</span>
@@ -25,7 +25,7 @@
                 <span>Excel 批量添加</span>
             </Button>
         </Upload>
-    </GridCol> 
+    </GridCol>
     <GridCol Span="4">
         <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@Pagination.TeacherId">
             <Prefix>
@@ -34,12 +34,12 @@
         </Input>
     </GridCol>
     <GridCol Span="2" Style="margin-left:5px">
-        <Button Type="@ButtonType.Primary" OnClick="GetTecherInfo">搜索</Button>
+        <Button Type="@ButtonType.Primary" OnClick="_=>LoadTeacherData()">搜索</Button>
     </GridCol>
 </GridRow>
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
-        <Table  TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
+        <Table TItem="Teacher" DataSource="_teachers" @bind-PageSize="Pagination.PageSize">
             <ChildContent Context="data">
                 @foreach (var column in _columns)
                 {
@@ -63,10 +63,10 @@
                 ShowSizeChanger="false"
                 PageSize="Pagination.PageSize"
                 Current="Pagination.Index"
-                OnChange="Callback"/>
+                OnChange="Callback" />
             </PaginationTemplate>
         </Table>
-    </GridCol>   
+    </GridCol>
 </GridRow>
 
 
@@ -75,18 +75,18 @@
         <Row Gutter="16">
             <AntDesign.Col Span="12">
                 <Text>姓名</Text>
-                <Input Disabled="true"  @bind-Value="@EditClass.name"></Input>
+                <Input Disabled="true" @bind-Value="@EditClass.name"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
                 <Text>性别</Text>
-                <Input  @bind-Value="@EditClass.gender"></Input>
+                <Input @bind-Value="@EditClass.gender"></Input>
             </AntDesign.Col>
         </Row>
         <br />
         <Row Gutter="16">
             <AntDesign.Col Span="12">
                 <Text>邮箱</Text>
-                <Input Disabled="true"  @bind-Value="@EditClass.email"></Input>
+                <Input Disabled="true" @bind-Value="@EditClass.email"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
                 <Text>电话</Text>
@@ -101,7 +101,7 @@
             </AntDesign.Col>
             <AntDesign.Col Span="12">
                 <Text>所属学院</Text>
-                <Input  @bind-Value="@EditClass.department"></Input>
+                <Input @bind-Value="@EditClass.department"></Input>
             </AntDesign.Col>
         </Row>
         <br />
@@ -128,12 +128,82 @@
 }
 
 @code {
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
+    private bool _hasLoadedData = false;
+    private HttpResponseMessage? httpResponseMessage { get; set; }
+
+    readonly string[] _columns = ["TeacherId", "Name", "Gender", "Email", "PhoneNumber", "Title", "Department", "Joining"];
+
+    private List<Teacher>? _teachers { get; set; }
+
+    private bool _isUploading = false;
+    private bool _isSee { get; set; } = false;
+
+    MessageConfig config = new MessageConfig()
+        {
+            Content = "加载数据中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+    MessageConfig config1 = new MessageConfig()
+        {
+            Content = "处理中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasLoadedData)
+        {
+            await LoadConfiguration();
+            await TableInit(await GetTeacherInfo());
+            StateHasChanged();
+            _hasLoadedData = true;
+        }
+    }
+
+    private async Task LoadConfiguration()
     {
         Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
         Ip = Configuration.GetSection("Ip")["Admin"];
-        await GetTecherInfo();
     }
+
+    private async Task<HttpResponseMessage> GetTeacherInfo()
+    {
+        _message.Loading(config);
+
+        var url = $"{Ip}/api/Teachers/GetTeachers";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var jsonContent = new
+        {
+            index = Pagination.Index,
+            pageSize = Pagination.PageSize,
+            teacherId = Pagination.TeacherId
+        };
+
+        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(url, content);
+
+        return response;
+    }
+
+    private async Task TableInit(HttpResponseMessage msg)
+    {
+        var jsonResponse = await msg.Content.ReadAsStringAsync();
+        var teacherResponse = JsonSerializer.Deserialize<ResponseModel>(jsonResponse);
+        _teachers = teacherResponse!.lsTeacherInfos;
+        Pagination.Total = teacherResponse.total;
+
+        config.Content = "加载成功！";
+        config.Duration = 1;
+        await _message.Success(config);
+    }
+
 
     private async Task DownloadTemplate()
     {
@@ -161,40 +231,15 @@
         _isUploading = !_isUploading;
     }
 
-    private async Task TableInit(HttpResponseMessage msg)
-    {
-        var jsonResponse = await msg.Content.ReadAsStringAsync();
-        var teacherResponse = JsonSerializer.Deserialize<ResponseModel>(jsonResponse);
-        _teachers = teacherResponse!.lsTeacherInfos;
-        Pagination.Total = teacherResponse.total;
-
-        config.Content = "加载成功！";
-        config.Duration = 1;
-        await _message.Success(config);
-        StateHasChanged();
-    }
     private async Task Callback(PaginationEventArgs obj)
     {
         Pagination.Index = obj.Page;
-        await GetTecherInfo();
+        await LoadTeacherData();
     }
 
-    private async Task GetTecherInfo()
+    private async Task LoadTeacherData()
     {
-        _message.Loading(config);
-
-        var url = $"{Ip}/api/Teachers/GetTeachers";
-
-        using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-        var jsonContent = new
-        {
-            index = Pagination.Index,
-            pageSize = Pagination.PageSize,
-            teacherId = Pagination.TeacherId
-        };
-        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
-        var response = await httpClient.PostAsync(url, content);
+        var response = await GetTeacherInfo();
         await TableInit(response);
     }
 
@@ -244,12 +289,12 @@
         var response = await client.PostAsync(url, content);
 
         if (response.IsSuccessStatusCode)
-        { 
+        {
             config1.Content = "处理成功!";
             config1.Duration = 1;
             await _message.Success(config1);
             Close();
-            await GetTecherInfo();
+            await LoadTeacherData();
         }
     }
 
@@ -263,31 +308,9 @@
         if (response.IsSuccessStatusCode)
         {
             await _message.Success("删除成功!");
-            await GetTecherInfo();
+            await LoadTeacherData();
         }
     }
-
-
-    readonly string[] _columns = ["TeacherId", "Name", "Gender", "Email", "PhoneNumber", "Title", "Department", "Joining"];
-
-    private List<Teacher>? _teachers;
-    private string? Token { get; set; }
-    private string? Ip { get; set; }
-    private bool _isUploading = false;
-    private bool _isSee { get; set; } = false;
-
-    MessageConfig config = new MessageConfig()
-    {
-            Content = "加载数据中...",
-            Key = $"updatable-{DateTime.Now.Ticks}"
-    };
-
-    MessageConfig config1 = new MessageConfig()
-    {
-        Content = "处理中...",
-        Key = $"updatable-{DateTime.Now.Ticks}"
-    };
-    
 
     private class Teacher
     {
