@@ -7,13 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AntDesign" Version="0.20.4.2" />
-    <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+    <Compile Remove="Components\Pages\Students\**" />
+    <Compile Remove="Components\Pages\Teachers\**" />
+    <Content Remove="Components\Pages\Students\**" />
+    <Content Remove="Components\Pages\Teachers\**" />
+    <EmbeddedResource Remove="Components\Pages\Students\**" />
+    <EmbeddedResource Remove="Components\Pages\Teachers\**" />
+    <None Remove="Components\Pages\Students\**" />
+    <None Remove="Components\Pages\Teachers\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\Teachers\" />
-    <Folder Include="Components\Pages\Students\" />
+    <PackageReference Include="AntDesign" Version="0.20.4.2" />
+    <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
   </ItemGroup>
 
 </Project>
