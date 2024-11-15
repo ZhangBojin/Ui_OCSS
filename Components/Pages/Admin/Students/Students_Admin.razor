@@ -188,7 +188,7 @@
     private async Task LoadConfiguration()
     {
         Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
-        Ip = Configuration.GetSection("Ip")["Admin"];
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
     }
 
     private async Task<HttpResponseMessage> GetStudentInfo()
