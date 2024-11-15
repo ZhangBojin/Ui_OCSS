@@ -1,11 +1,12 @@
 ﻿using System.Net.Http.Headers;
+using Ui_OCSS.Components.Layout;
 
 namespace Ui_OCSS.Infrastructure.HeartbeatService;
 
-public class HeartbeatService(IConfiguration configuration) : IHostedService
+public class HeartbeatService(IConfiguration configuration, HttpClient httpClient) : IHostedService
 {
     private readonly IConfiguration _configuration = configuration;
-    private readonly HttpClient _httpClient=new HttpClient();
+    private readonly HttpClient _httpClient = httpClient;
     public Task StartAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
@@ -17,7 +18,7 @@ public class HeartbeatService(IConfiguration configuration) : IHostedService
     }
     public void StartPolling(string token)
     {
-        var timer = new Timer(async _ => await SendHeartbeat(token), null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
+        var timer = new Timer( async _ => await SendHeartbeat(token), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
     }
     private async Task SendHeartbeat(string token)
     {
@@ -27,7 +28,7 @@ public class HeartbeatService(IConfiguration configuration) : IHostedService
         if (response.IsSuccessStatusCode)
         {
             var responseContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(responseContent);
+            MainLayout.Number=responseContent;
         }
     }
 }

@@ -13,7 +13,7 @@
     <main>
         <div class="top-row px-4">
             <label>当前在线人数：</label>
-            <label style="color:dodgerblue">2001</label>
+            <label style="color:dodgerblue">@Number</label>
         </div>
 
         <article class="content px-4">
@@ -31,11 +31,15 @@
 
 @code{
     private string? Token { get; set; }
+    public static string Number { get; set; } = "1";
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
-        HeartbeatService.StartPolling(Token);
+        if (firstRender)
+        {
+            Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+            HeartbeatService.StartPolling(Token);
+        }
     }
-    
 }
