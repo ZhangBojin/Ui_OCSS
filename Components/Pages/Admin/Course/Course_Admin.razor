@@ -1,0 +1,383 @@
+﻿@page "/Admin/Course"
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+@inject IMessageService _message
+
+<GridRow>
+    <GridCol Span="12">
+        <PageHeader Class="site-page-header" Title="Course" Subtitle="课程信息" />
+    </GridCol>
+    <GridCol Span="12" style="display: flex; justify-content: flex-end;">
+       
+    </GridCol>
+    <GridCol Span="4">
+        <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@PaginationStudent.StudentId">
+        <Prefix>
+            <Icon Type="user" />
+        </Prefix>
+        </Input>
+    </GridCol>
+    <GridCol Span="2" Style="margin-left:5px">
+        <Button Type="@ButtonType.Primary" OnClick="_=>LoadTeacherData()">搜索</Button>
+    </GridCol>
+</GridRow>
+<GridRow>
+    <GridCol Span="24" Style="height:100vh;">
+        <Table TItem="Student" DataSource="_students" @bind-PageSize="PaginationStudent.PageSize">
+            <ChildContent Context="data">
+                @foreach (var column in _columns)
+                {
+                    <Column TData="object" DataIndex="@column"></Column>
+                }
+                <ActionColumn Title="Action">
+                    <Space Size=@("middle")>
+                        <SpaceItem>
+                            <Button Icon="edit" Type="@ButtonType.Primary" @onclick="_=>Open(data)">编辑</Button>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Popconfirm Placement="@Placement.Bottom" Title="确定要删除吗？" OnConfirm="_=>Delete((int)data.id!)">
+                                <Button Icon="delete" Danger Type="@ButtonType.Primary">删除</Button>
+                            </Popconfirm>
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </ChildContent>
+            <PaginationTemplate>
+                <Pagination Total="PaginationStudent.Total"
+                            ShowSizeChanger="false"
+                            PageSize="PaginationStudent.PageSize"
+                            Current="PaginationStudent.Index"
+                            OnChange="Callback" />
+            </PaginationTemplate>
+        </Table>
+    </GridCol>
+</GridRow>
+
+
+<Drawer Closable="true" Width="720" Visible="_isSee" Title='("修改信息")' OnClose="_=>Close()">
+    <Template style="height:90%">
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>姓名</Text>
+                <Input Disabled="true" @bind-Value="@EditClass.name"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>性别</Text>
+                <Input @bind-Value="@EditClass.gender"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>邮箱</Text>
+                <Input Disabled="true" @bind-Value="@EditClass.email"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>电话</Text>
+                <Input @bind-Value="@EditClass.phoneNumber"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>住址</Text>
+                <Input @bind-Value="@EditClass.address"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>专业</Text>
+                <Input @bind-Value="@EditClass.major"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>学籍信息</Text>
+                <Input @bind-Value="@EditClass.enrollmentStatus"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>所属院系</Text>
+                <Input @bind-Value="@EditClass.department"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br /> <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>入学时间</Text>
+                <Input Disabled="true" @bind-Value="@EditClass.joining"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>学籍状态</Text>
+                <Input @bind-Value="@EditClass.status"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+
+        <Row>
+            <AntDesign.Col Span="18">
+
+            </AntDesign.Col>
+            <AntDesign.Col Span="6">
+                <Button Type="default" @onclick="_=>Close()">取消</Button>
+                <Button Type="primary" @onclick="_=>Edit()">提交</Button>
+            </AntDesign.Col>
+        </Row>
+    </Template>
+</Drawer>
+
+@if (_isUploading)
+{
+    <div class="overlay">
+        <div class="loading-message">
+            <Spin size="large" />耐心等待上传...
+        </div>
+    </div>
+}
+
+@code {
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
+    private bool _hasLoadedData = false;
+    private HttpResponseMessage? httpResponseMessage { get; set; }
+
+    readonly string[] _columns = ["StudentId", "Name", "Gender", "Email", "PhoneNumber", "Address", "Major", "EnrollmentStatus", "Department", "Joining", "Status"];
+
+    private List<Student>? _students { get; set; }
+
+    private bool _isUploading = false;
+    private bool _isSee { get; set; } = false;
+
+    MessageConfig config = new MessageConfig()
+        {
+            Content = "加载数据中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+    MessageConfig config1 = new MessageConfig()
+        {
+            Content = "处理中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasLoadedData)
+        {
+            await LoadConfiguration();
+            await TableInit(await GetStudentInfo());
+            StateHasChanged();
+            _hasLoadedData = true;
+        }
+    }
+
+    private async Task LoadConfiguration()
+    {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
+    }
+
+    private async Task<HttpResponseMessage> GetStudentInfo()
+    {
+        _message.Loading(config);
+
+        var url = $"{Ip}/api/Students/GetStudents";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var jsonContent = new
+        {
+            index = PaginationStudent.Index,
+            pageSize = PaginationStudent.PageSize,
+            studentId = PaginationStudent.StudentId
+        };
+
+        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(url, content);
+
+        return response;
+    }
+
+    private async Task TableInit(HttpResponseMessage msg)
+    {
+        var jsonResponse = await msg.Content.ReadAsStringAsync();
+        var teacherResponse = JsonSerializer.Deserialize<ResponseModel>(jsonResponse);
+        _students = teacherResponse!.lsStudentInfos;
+        PaginationStudent.Total = teacherResponse.total;
+
+        config.Content = "加载成功！";
+        config.Duration = 1;
+        await _message.Success(config);
+    }
+
+
+    private async Task DownloadTemplate()
+    {
+        var url = $"{Ip}/api/Students/DownloadTemplate";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await client.GetAsync(url);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var fileBytes = await response.Content.ReadAsByteArrayAsync();
+            var contentDisposition = response.Content.Headers.ContentDisposition;
+            var fileName = contentDisposition?.FileName.Trim('"') ?? "default.xlsx";
+
+            var base64 = Convert.ToBase64String(fileBytes);
+            var blobUrl = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}";
+
+            Navigation.NavigateTo(blobUrl, true);
+        }
+    }
+
+    private void Waiting()
+    {
+        _isUploading = !_isUploading;
+    }
+
+    private async Task Callback(PaginationEventArgs obj)
+    {
+        PaginationStudent.Index = obj.Page;
+        await LoadTeacherData();
+    }
+
+    private async Task LoadTeacherData()
+    {
+        var response = await GetStudentInfo();
+        await TableInit(response);
+    }
+
+    void Open(Student student)
+    {
+        EditClass.id = student.studentId;
+        EditClass.name = student.name;
+        EditClass.gender = student.gender;
+        EditClass.email = student.email;
+        EditClass.phoneNumber = student.phoneNumber;
+        EditClass.address = student.address;
+        EditClass.major = student.major;
+        EditClass.enrollmentStatus = student.enrollmentStatus;
+        EditClass.department = student.department;
+        EditClass.joining = student.joining;
+        EditClass.status = student.status;
+
+        this._isSee = true;
+    }
+
+    void Close()
+    {
+        EditClass.id = null;
+        EditClass.name = null;
+        EditClass.gender = null;
+        EditClass.email = null;
+        EditClass.phoneNumber = null;
+        EditClass.address = null;
+        EditClass.major = null;
+        EditClass.enrollmentStatus = null;
+        EditClass.department = null;
+        EditClass.joining = null;
+        EditClass.joining = null;
+        this._isSee = false;
+    }
+
+    private async Task Edit()
+    {
+        _message.Loading(config1);
+        var url = $"{Ip}/api/Students/EditStudents";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var teacher = new
+        {
+            id = EditClass.id,
+            gender = EditClass.gender,
+            phoneNumber = EditClass.phoneNumber,
+            address = EditClass.address,
+            major = EditClass.major,
+            enrollmentStatus = EditClass.enrollmentStatus,
+            department = EditClass.department,
+            status = EditClass.status
+        };
+        var json = JsonSerializer.Serialize(teacher);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync(url, content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            config1.Content = "处理成功!";
+            config1.Duration = 1;
+            await _message.Success(config1);
+            Close();
+            await LoadTeacherData();
+        }
+    }
+
+    private async Task Delete(int id)
+    {
+        var url = $"{Ip}/api/Teachers/DeleteTeachers?id={id}";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await client.PostAsync(url, new StringContent(string.Empty));
+        if (response.IsSuccessStatusCode)
+        {
+            await _message.Success("删除成功!");
+            await LoadTeacherData();
+        }
+    }
+
+    private class Student
+    {
+        public int? id { get; set; }
+        public int? studentId { get; set; }
+        public int? userId { get; set; }
+        public string? name { get; set; }
+        public string? gender { get; set; }
+        public string? email { get; set; }
+        public long? phoneNumber { get; set; }
+        public string? address { get; set; }
+        public string? major { get; set; }
+        public string? enrollmentStatus { get; set; }
+        public string? department { get; set; }
+        public string? joining { get; set; }
+        public string? status { get; set; }
+
+    }
+
+    private static class PaginationStudent
+    {
+        public static int Index { get; set; } = 1;
+        public static int Total { get; set; }
+        public static int PageSize { get; set; } = 10;
+        public static int? StudentId { get; set; } = null;
+    }
+
+    private class ResponseModel
+    {
+        public List<Student> lsStudentInfos { get; init; }
+        public int total { get; init; }
+    }
+
+    private static class EditClass
+    {
+        public static int? id { get; set; }
+        public static string? name { get; set; }
+        public static string? gender { get; set; }
+        public static string? email { get; set; }
+        public static long? phoneNumber { get; set; }
+        public static string? address { get; set; }
+        public static string? major { get; set; }
+        public static string? enrollmentStatus { get; set; }
+        public static string? department { get; set; }
+        public static string? joining { get; set; }
+        public static string? status { get; set; }
+
+    }
+}
