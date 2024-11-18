@@ -16,7 +16,7 @@
        
     </GridCol>
     <GridCol Span="4">
-        <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@PaginationStudent.StudentId">
+        <Input Placeholder="角色" Size="@InputSize.Default" @bind-Value="@PaginationStudent.RoleName">
         <Prefix>
             <Icon Type="user" />
         </Prefix>
@@ -28,7 +28,7 @@
 </GridRow>
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
-        <Table TItem="Student" DataSource="_students" @bind-PageSize="PaginationStudent.PageSize">
+        <Table TItem="Menu" DataSource="_m" @bind-PageSize="PaginationStudent.PageSize">
             <ChildContent Context="data">
                 @foreach (var column in _columns)
                 {
@@ -128,14 +128,7 @@
     </Template>
 </Drawer>
 
-@if (_isUploading)
-{
-    <div class="overlay">
-        <div class="loading-message">
-            <Spin size="large" />耐心等待上传...
-        </div>
-    </div>
-}
+
 
 @code {
     private string? Token { get; set; }
@@ -143,11 +136,10 @@
     private bool _hasLoadedData = false;
     private HttpResponseMessage? httpResponseMessage { get; set; }
 
-    readonly string[] _columns = ["StudentId", "Name", "Gender", "Email", "PhoneNumber", "Address", "Major", "EnrollmentStatus", "Department", "Joining", "Status"];
+    readonly string[] _columns = ["id", "href", "name", "icon", "sequence", "roleId", "roleName"];
 
-    private List<Student>? _students { get; set; }
+    private List<Menu>? _m { get; set; }
 
-    private bool _isUploading = false;
     private bool _isSee { get; set; } = false;
 
     MessageConfig config = new MessageConfig()
@@ -184,16 +176,16 @@
     {
         _message.Loading(config);
 
-        var url = $"{Ip}/api/Students/GetStudents";
-
+        //var url = $"{Ip}/api/Menu/GetMenuList";
+        var url = "http://localhost:7779/api/Menu/GetMenuList";
         using var httpClient = new HttpClient();
-        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        //httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
         var jsonContent = new
         {
             index = PaginationStudent.Index,
             pageSize = PaginationStudent.PageSize,
-            studentId = PaginationStudent.StudentId
+            roleName = PaginationStudent.RoleName
         };
 
         var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
@@ -206,7 +198,7 @@
     {
         var jsonResponse = await msg.Content.ReadAsStringAsync();
         var teacherResponse = JsonSerializer.Deserialize<ResponseModel>(jsonResponse);
-        _students = teacherResponse!.lsStudentInfos;
+        _m = teacherResponse!._menus;
         PaginationStudent.Total = teacherResponse.total;
 
         config.Content = "加载成功！";
@@ -236,10 +228,7 @@
         }
     }
 
-    private void Waiting()
-    {
-        _isUploading = !_isUploading;
-    }
+
 
     private async Task Callback(PaginationEventArgs obj)
     {
@@ -253,19 +242,15 @@
         await TableInit(response);
     }
 
-    void Open(Student student)
+    void Open(Menu m)
     {
-        EditClass.id = student.studentId;
-        EditClass.name = student.name;
-        EditClass.gender = student.gender;
-        EditClass.email = student.email;
-        EditClass.phoneNumber = student.phoneNumber;
-        EditClass.address = student.address;
-        EditClass.major = student.major;
-        EditClass.enrollmentStatus = student.enrollmentStatus;
-        EditClass.department = student.department;
-        EditClass.joining = student.joining;
-        EditClass.status = student.status;
+        // EditClass.id = m.studentId;
+        // EditClass.name = m.name;
+        // EditClass.gender = m.gender;
+        // EditClass.email = m.email;
+        // EditClass.phoneNumber = m.phoneNumber;
+        // EditClass.address = m.address;
+        // EditClass.major = m.major;
 
         this._isSee = true;
     }
@@ -333,21 +318,15 @@
         }
     }
 
-    private class Student
+    private class Menu
     {
         public int? id { get; set; }
-        public int? studentId { get; set; }
-        public int? userId { get; set; }
+        public string? href { get; set; }
         public string? name { get; set; }
-        public string? gender { get; set; }
-        public string? email { get; set; }
-        public long? phoneNumber { get; set; }
-        public string? address { get; set; }
-        public string? major { get; set; }
-        public string? enrollmentStatus { get; set; }
-        public string? department { get; set; }
-        public string? joining { get; set; }
-        public string? status { get; set; }
+        public string? icon { get; set; }
+        public int? sequence { get; set; }
+        public int? roleId { get; set; }
+        public string? roleName { get; set; }
 
     }
 
@@ -356,12 +335,12 @@
         public static int Index { get; set; } = 1;
         public static int Total { get; set; }
         public static int PageSize { get; set; } = 10;
-        public static int? StudentId { get; set; } = null;
+        public static string? RoleName { get; set; } = "";
     }
 
     private class ResponseModel
     {
-        public List<Student> lsStudentInfos { get; init; }
+        public List<Menu> _menus { get; init; }
         public int total { get; init; }
     }
 
