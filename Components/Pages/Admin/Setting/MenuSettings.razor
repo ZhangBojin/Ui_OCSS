@@ -13,13 +13,13 @@
         <PageHeader Class="site-page-header" Title="Menu" Subtitle="菜单设置" />
     </GridCol>
     <GridCol Span="12" style="display: flex; justify-content: flex-end;">
-       
+
     </GridCol>
     <GridCol Span="4">
         <Input Placeholder="角色" Size="@InputSize.Default" @bind-Value="@PaginationStudent.RoleName">
-        <Prefix>
-            <Icon Type="user" />
-        </Prefix>
+            <Prefix>
+                <Icon Type="user" />
+            </Prefix>
         </Input>
     </GridCol>
     <GridCol Span="2" Style="margin-left:5px">
@@ -49,10 +49,10 @@
             </ChildContent>
             <PaginationTemplate>
                 <Pagination Total="PaginationStudent.Total"
-                            ShowSizeChanger="false"
-                            PageSize="PaginationStudent.PageSize"
-                            Current="PaginationStudent.Index"
-                            OnChange="Callback" />
+                ShowSizeChanger="false"
+                PageSize="PaginationStudent.PageSize"
+                Current="PaginationStudent.Index"
+                OnChange="Callback" />
             </PaginationTemplate>
         </Table>
     </GridCol>
@@ -160,7 +160,7 @@
         if (firstRender && !_hasLoadedData)
         {
             await LoadConfiguration();
-            await TableInit(await GetStudentInfo());
+            await TableInit(await GetMenuInfo());
             StateHasChanged();
             _hasLoadedData = true;
         }
@@ -172,14 +172,14 @@
         Ip = Configuration.GetSection("Ip")["ApiGateWay"];
     }
 
-    private async Task<HttpResponseMessage> GetStudentInfo()
+    private async Task<HttpResponseMessage> GetMenuInfo()
     {
         _message.Loading(config);
 
         //var url = $"{Ip}/api/Menu/GetMenuList";
         var url = "http://localhost:7779/api/Menu/GetMenuList";
         using var httpClient = new HttpClient();
-        //httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
         var jsonContent = new
         {
@@ -207,29 +207,6 @@
     }
 
 
-    private async Task DownloadTemplate()
-    {
-        var url = $"{Ip}/api/Students/DownloadTemplate";
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
-
-        var response = await client.GetAsync(url);
-
-        if (response.IsSuccessStatusCode)
-        {
-            var fileBytes = await response.Content.ReadAsByteArrayAsync();
-            var contentDisposition = response.Content.Headers.ContentDisposition;
-            var fileName = contentDisposition?.FileName.Trim('"') ?? "default.xlsx";
-
-            var base64 = Convert.ToBase64String(fileBytes);
-            var blobUrl = $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{base64}";
-
-            Navigation.NavigateTo(blobUrl, true);
-        }
-    }
-
-
-
     private async Task Callback(PaginationEventArgs obj)
     {
         PaginationStudent.Index = obj.Page;
@@ -238,7 +215,7 @@
 
     private async Task LoadTeacherData()
     {
-        var response = await GetStudentInfo();
+        var response = await GetMenuInfo();
         await TableInit(response);
     }
 
@@ -306,7 +283,8 @@
 
     private async Task Delete(int id)
     {
-        var url = $"{Ip}/api/Teachers/DeleteTeachers?id={id}";
+        var url = $"http://localhost:7779/api/Menu/DelMenuById?id={id}";
+        //var url = $"{Ip}/api/Teachers/DeleteTeachers?id={id}";
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
