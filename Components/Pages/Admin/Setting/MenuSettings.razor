@@ -25,6 +25,9 @@
     <GridCol Span="2" Style="margin-left:5px">
         <Button Type="@ButtonType.Primary" OnClick="_=>LoadTeacherData()">搜索</Button>
     </GridCol>
+    <GridCol Span="17" Style="width:100%;text-align:right;">
+        <Button Type="@ButtonType.Primary" OnClick="_=>AddOpen()" Style="width:8vw">添加</Button>
+    </GridCol>
 </GridRow>
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
@@ -63,58 +66,36 @@
     <Template style="height:90%">
         <Row Gutter="16">
             <AntDesign.Col Span="12">
-                <Text>姓名</Text>
-                <Input Disabled="true" @bind-Value="@EditClass.name"></Input>
+                <Text>Href</Text>
+                <Input  @bind-Value="@EditClass.href"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
-                <Text>性别</Text>
-                <Input @bind-Value="@EditClass.gender"></Input>
+                <Text>Name</Text>
+                <Input @bind-Value="@EditClass.name"></Input>
             </AntDesign.Col>
         </Row>
         <br />
         <Row Gutter="16">
             <AntDesign.Col Span="12">
-                <Text>邮箱</Text>
-                <Input Disabled="true" @bind-Value="@EditClass.email"></Input>
+                <Text>Icon</Text>
+                <Input  @bind-Value="@EditClass.icon"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
-                <Text>电话</Text>
-                <Input @bind-Value="@EditClass.phoneNumber"></Input>
+                <Text>Sequence</Text>
+                <Input @bind-Value="@EditClass.sequence"></Input>
             </AntDesign.Col>
         </Row>
         <br />
         <Row Gutter="16">
             <AntDesign.Col Span="12">
-                <Text>住址</Text>
-                <Input @bind-Value="@EditClass.address"></Input>
+                <Text>RoleName</Text>
+                <Input Disabled="true" @bind-Value="@EditClass.roleName"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
-                <Text>专业</Text>
-                <Input @bind-Value="@EditClass.major"></Input>
+               
             </AntDesign.Col>
         </Row>
-        <br />
-        <Row Gutter="16">
-            <AntDesign.Col Span="12">
-                <Text>学籍信息</Text>
-                <Input @bind-Value="@EditClass.enrollmentStatus"></Input>
-            </AntDesign.Col>
-            <AntDesign.Col Span="12">
-                <Text>所属院系</Text>
-                <Input @bind-Value="@EditClass.department"></Input>
-            </AntDesign.Col>
-        </Row>
-        <br /> <Row Gutter="16">
-            <AntDesign.Col Span="12">
-                <Text>入学时间</Text>
-                <Input Disabled="true" @bind-Value="@EditClass.joining"></Input>
-            </AntDesign.Col>
-            <AntDesign.Col Span="12">
-                <Text>学籍状态</Text>
-                <Input @bind-Value="@EditClass.status"></Input>
-            </AntDesign.Col>
-        </Row>
-        <br />
+       <br/>
 
         <Row>
             <AntDesign.Col Span="18">
@@ -129,18 +110,75 @@
 </Drawer>
 
 
+<Drawer Closable="true" Width="720" Visible="_isAddSee" Title='("添加信息")' OnClose="_=>Close()">
+    <Template style="height:90%">
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>Href</Text>
+                <Input Placeholder="路径" @bind-Value="@EditClass.href"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>Name</Text>
+                <Input Placeholder="描述" @bind-Value="@EditClass.name"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>Icon</Text>
+                <Input Placeholder="图标路径" @bind-Value="@EditClass.icon"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>Sequence</Text>
+                <Input Placeholder="序列" @bind-Value="@EditClass.sequence"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>RoleName</Text>
+                @* <Input Placeholder="角色" @bind-Value="@EditClass.roleName"></Input> *@
+                <SimpleSelect DefaultValue="1" @bind-Value="@SelRole">
+                    <SelectOptions>
+                        <SimpleSelectOption Value="1" Label="管理员"></SimpleSelectOption>
+                        <SimpleSelectOption Value="2" Label="学生"></SimpleSelectOption>
+                        <SimpleSelectOption Value="3" Label="教师"></SimpleSelectOption>
+                    </SelectOptions>
+                </SimpleSelect>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+               
+            </AntDesign.Col>
+        </Row>
+        <br/>
+
+        <Row>
+            <AntDesign.Col Span="18">
+
+            </AntDesign.Col>
+            <AntDesign.Col Span="6">
+                <Button Type="default" @onclick="_=>AddClose()">取消</Button>
+                <Button Type="primary" @onclick="_=>Add()">提交</Button>
+            </AntDesign.Col>
+        </Row>
+    </Template>
+</Drawer>
+
 
 @code {
     private string? Token { get; set; }
     private string? Ip { get; set; }
     private bool _hasLoadedData = false;
-    private HttpResponseMessage? httpResponseMessage { get; set; }
 
     readonly string[] _columns = [ "href", "name", "icon", "sequence", "roleId", "roleName"];
 
     private List<Menu>? _m { get; set; }
 
     private bool _isSee { get; set; } = false;
+    private bool _isAddSee { get; set; } = false;
+
+    private string? SelRole { get; set; }
+
 
     MessageConfig config = new MessageConfig()
         {
@@ -176,8 +214,7 @@
     {
         _message.Loading(config);
 
-        //var url = $"{Ip}/api/Menu/GetMenuList";
-        var url = "http://localhost:7779/api/Menu/GetMenuList";
+        var url = $"{Ip}/api/Menu/GetMenuList";
         using var httpClient = new HttpClient();
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
@@ -221,13 +258,12 @@
 
     void Open(Menu m)
     {
-        // EditClass.id = m.studentId;
-        // EditClass.name = m.name;
-        // EditClass.gender = m.gender;
-        // EditClass.email = m.email;
-        // EditClass.phoneNumber = m.phoneNumber;
-        // EditClass.address = m.address;
-        // EditClass.major = m.major;
+        EditClass.id = m.id;
+        EditClass.href = m.href;
+        EditClass.name = m.name;
+        EditClass.icon = m.icon;
+        EditClass.sequence = m.sequence;
+        EditClass.roleName = m.roleName;
 
         this._isSee = true;
     }
@@ -235,38 +271,95 @@
     void Close()
     {
         EditClass.id = null;
+        EditClass.href = null;
         EditClass.name = null;
-        EditClass.gender = null;
-        EditClass.email = null;
-        EditClass.phoneNumber = null;
-        EditClass.address = null;
-        EditClass.major = null;
-        EditClass.enrollmentStatus = null;
-        EditClass.department = null;
-        EditClass.joining = null;
-        EditClass.joining = null;
+        EditClass.icon = null;
+        EditClass.sequence = null;
+        EditClass.roleName = null;
         this._isSee = false;
+    }
+
+    void AddOpen()
+    {
+        EditClass.id = null;
+        EditClass.href = null;
+        EditClass.name = null;
+        EditClass.icon = null;
+        EditClass.sequence = null;
+        EditClass.roleName = null;
+
+        _isAddSee = true;
+    }
+
+    void AddClose()
+    {
+        EditClass.id = null;
+        EditClass.href = null;
+        EditClass.name = null;
+        EditClass.icon = null;
+        EditClass.sequence = null;
+        EditClass.roleName = null;
+
+        _isAddSee = false;
+    }
+
+    private async Task Add()
+    {
+        _message.Loading(config1);
+
+        var url = $"{Ip}/api/Menu/AddMenu";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var menu = new
+        {
+            href = EditClass.href,
+            name = EditClass.name,
+            icon = EditClass.icon,
+            sequence = EditClass.sequence,
+            roleId = System.Convert.ToInt32(SelRole)
+        };
+        var json = JsonSerializer.Serialize(menu);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync(url, content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            config1.Content = "处理成功!";
+            config1.Duration = 1;
+            await _message.Success(config1);
+            AddClose();
+            await LoadTeacherData();
+        }
     }
 
     private async Task Edit()
     {
         _message.Loading(config1);
-        var url = $"{Ip}/api/Students/EditStudents";
+
+        var url = $"{Ip}/api/Menu/UpdMenuById";
+
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
-        var teacher = new
+        var menu = new
         {
             id = EditClass.id,
-            gender = EditClass.gender,
-            phoneNumber = EditClass.phoneNumber,
-            address = EditClass.address,
-            major = EditClass.major,
-            enrollmentStatus = EditClass.enrollmentStatus,
-            department = EditClass.department,
-            status = EditClass.status
+            href = EditClass.href,
+            name = EditClass.name,
+            icon = EditClass.icon,
+            sequence = EditClass.sequence,
+            roleId = (EditClass.roleName) switch
+            {
+                "管理员" => 1, 
+                "学生"=> 2,
+                "教师"=> 3,
+                _ => 0 
+            },
+            roleName = EditClass.roleName
         };
-        var json = JsonSerializer.Serialize(teacher);
+        var json = JsonSerializer.Serialize(menu);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         var response = await client.PostAsync(url, content);
@@ -283,8 +376,7 @@
 
     private async Task Delete(int id)
     {
-        var url = $"http://localhost:7779/api/Menu/DelMenuById?id={id}";
-        //var url = $"{Ip}/api/Teachers/DeleteTeachers?id={id}";
+        var url = $"{Ip}/api/Menu/DelMenuById?id={id}";
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
@@ -325,16 +417,10 @@
     private static class EditClass
     {
         public static int? id { get; set; }
+        public static string? href { get; set; }
         public static string? name { get; set; }
-        public static string? gender { get; set; }
-        public static string? email { get; set; }
-        public static long? phoneNumber { get; set; }
-        public static string? address { get; set; }
-        public static string? major { get; set; }
-        public static string? enrollmentStatus { get; set; }
-        public static string? department { get; set; }
-        public static string? joining { get; set; }
-        public static string? status { get; set; }
-
+        public static string? icon { get; set; }
+        public static int? sequence { get; set; }
+        public static string? roleName { get; set; }
     }
 }
