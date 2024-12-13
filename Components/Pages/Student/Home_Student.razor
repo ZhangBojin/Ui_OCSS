@@ -1,7 +1,41 @@
 ﻿@page "/Student/Home"
 
 
-<h3>Home_Student</h3>
+<PageHeader Class="site-page-header" Title="Home" Subtitle="主页信息" />
+
+<Divider />
+
+<div style="padding-left:30px;padding-right:30px;">
+    <Descriptions Title="学生信息">
+        <DescriptionsItem Title="姓名">张伟</DescriptionsItem>
+        <DescriptionsItem Title="邮箱">1433233@163.com</DescriptionsItem>
+        <DescriptionsItem Title="电话">18100000000</DescriptionsItem>
+        <DescriptionsItem Title="住址">
+            四川省成都市武侯区xxx小区
+        </DescriptionsItem>
+        <DescriptionsItem Title="专业">软件工程</DescriptionsItem>
+        <DescriptionsItem Title="所属院系">计算机与软件学院</DescriptionsItem>
+    </Descriptions>
+</div>
+
+<Divider Dashed />
+
+<div style="background:#ECECEC; padding:20px; display: flex; justify-content: space-between;">
+    <Card Bordered="false" Title=@("系统消息") Style="width: 45%">
+        <ChildContent>
+            <p>1.2025年上半学期选课将于4月15日8点整开始，请同学们做好准备。</p>
+            <p>2.2025年上半学期选课将于4月15日8点整开始，请同学们做好准备。</p>
+            <p>3.2025年上半学期选课将于4月15日8点整开始，请同学们做好准备。</p>
+        </ChildContent>
+    </Card>
+    
+    <Card Bordered="false" Title=@("我的选课") Style="width: 45%">
+        <ChildContent>
+            <p>当前已选课程：  “导弹装配与维修”  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.example.com" target="_blank">查看详情</a> </p>
+        </ChildContent>
+    </Card>
+</div>
+
 
 @code {
 
