@@ -220,7 +220,7 @@
         _course = courseResponse!.lsCourse;
         Pagination.Total = (int)courseResponse.total!;
 
-        config.Content = "加载成功！";
+        config.Content = "加载成功！"; 
         config.Duration = 1;
         await _message.Success(config);
     }
