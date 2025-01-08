@@ -16,7 +16,7 @@
 
     </GridCol>
     <GridCol Span="4">
-        <Input Type="number" Placeholder="学工号" Size="@InputSize.Default" @bind-Value="@PaginationStudent.TeacherId">
+        <Input Type="number" Placeholder="教师工号" Size="@InputSize.Default" @bind-Value="@Pagination.TeacherId">
             <Prefix>
                 <Icon Type="user" />
             </Prefix>
@@ -25,10 +25,13 @@
     <GridCol Span="2" Style="margin-left:5px">
         <Button Type="@ButtonType.Primary" OnClick="_=>LoadTeacherData()">搜索</Button>
     </GridCol>
+    <GridCol Span="17" Style="width:100%;text-align:right;">
+        <Button Type="@ButtonType.Primary" OnClick="_=>AddOpen()" Style="width:8vw">添加</Button>
+    </GridCol>
 </GridRow>
 <GridRow>
     <GridCol Span="24" Style="height:100vh;">
-        <Table TItem="Course" DataSource="_course" @bind-PageSize="PaginationStudent.PageSize">
+        <Table TItem="Course" DataSource="_course" @bind-PageSize="Pagination.PageSize">
             <ChildContent Context="data">
                 @foreach (var column in _columns)
                 {
@@ -37,7 +40,7 @@
                 <ActionColumn Title="Action">
                     <Space Size=@("middle")>
                         <SpaceItem>
-                            <Button Icon="edit" Type="@ButtonType.Primary" @onclick="_=>Open()">编辑</Button>
+                            <Button Icon="edit" Type="@ButtonType.Primary" @onclick="_=>Open(data)">教师分配</Button>
                         </SpaceItem>
                         <SpaceItem>
                             <Popconfirm Placement="@Placement.Bottom" Title="确定要删除吗？" OnConfirm="_=>Delete((int)data.id!)">
@@ -48,10 +51,10 @@
                 </ActionColumn>
             </ChildContent>
             <PaginationTemplate>
-                <Pagination Total="PaginationStudent.Total"
+                <Pagination Total="Pagination.Total"
                 ShowSizeChanger="false"
-                PageSize="PaginationStudent.PageSize"
-                Current="PaginationStudent.Index"
+                            PageSize="Pagination.PageSize"
+                            Current="Pagination.Index"
                 OnChange="Callback" />
             </PaginationTemplate>
         </Table>
@@ -59,59 +62,16 @@
 </GridRow>
 
 
-@* <Drawer Closable="true" Width="720" Visible="_isSee" Title='("修改信息")' OnClose="_=>Close()">
+<Drawer Closable="true" Width="720" Visible="_isSee" Title='("分配教师")' OnClose="_=>Close()">
     <Template style="height:90%">
         <Row Gutter="16">
             <AntDesign.Col Span="12">
-                <Text>姓名</Text>
-                <Input Disabled="true" @bind-Value="@EditClass.name"></Input>
+                <Text>教师工号</Text>
+                <Input @bind-Value="@EditClass.teacherId"></Input>
             </AntDesign.Col>
             <AntDesign.Col Span="12">
-                <Text>性别</Text>
-                <Input @bind-Value="@EditClass.gender"></Input>
-            </AntDesign.Col>
-        </Row>
-        <br />
-        <Row Gutter="16">
-            <AntDesign.Col Span="12">
-                <Text>邮箱</Text>
-                <Input Disabled="true" @bind-Value="@EditClass.email"></Input>
-            </AntDesign.Col>
-            <AntDesign.Col Span="12">
-                <Text>电话</Text>
-                <Input @bind-Value="@EditClass.phoneNumber"></Input>
-            </AntDesign.Col>
-        </Row>
-        <br />
-        <Row Gutter="16">
-            <AntDesign.Col Span="12">
-                <Text>住址</Text>
-                <Input @bind-Value="@EditClass.address"></Input>
-            </AntDesign.Col>
-            <AntDesign.Col Span="12">
-                <Text>专业</Text>
-                <Input @bind-Value="@EditClass.major"></Input>
-            </AntDesign.Col>
-        </Row>
-        <br />
-        <Row Gutter="16">
-            <AntDesign.Col Span="12">
-                <Text>学籍信息</Text>
-                <Input @bind-Value="@EditClass.enrollmentStatus"></Input>
-            </AntDesign.Col>
-            <AntDesign.Col Span="12">
-                <Text>所属院系</Text>
-                <Input @bind-Value="@EditClass.department"></Input>
-            </AntDesign.Col>
-        </Row>
-        <br /> <Row Gutter="16">
-            <AntDesign.Col Span="12">
-                <Text>入学时间</Text>
-                <Input Disabled="true" @bind-Value="@EditClass.joining"></Input>
-            </AntDesign.Col>
-            <AntDesign.Col Span="12">
-                <Text>学籍状态</Text>
-                <Input @bind-Value="@EditClass.status"></Input>
+                <Text>教师姓名</Text>
+                <Input @bind-Value="@EditClass.teacherName"></Input>
             </AntDesign.Col>
         </Row>
         <br />
@@ -127,7 +87,64 @@
         </Row>
     </Template>
 </Drawer>
- *@
+
+<Drawer Closable="true" Width="720" Visible="_isAddSee" Title='("添加信息")' OnClose="_=>Close()">
+    <Template style="height:90%">
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>Name</Text>
+                <Input Placeholder="课程名" @bind-Value="@AddCourse.Name"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>ClassTime</Text>
+                <Input Placeholder="上课时间" @bind-Value="@AddCourse.ClassTime"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>Classroom</Text>
+                <Input Placeholder="教室" @bind-Value="@AddCourse.Classroom"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>Description</Text>
+                <Input Placeholder="课程描述" @bind-Value="@AddCourse.Description"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>Credits</Text>
+                <Input Type="number"  Placeholder="学分" @bind-Value="@AddCourse.Credits"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>Type</Text>
+                <Input Placeholder="课程类型" @bind-Value="@AddCourse.Type"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row Gutter="16">
+            <AntDesign.Col Span="12">
+                <Text>MaxStudents</Text>
+                <Input Type="number" Placeholder="最大学生数量" @bind-Value="@AddCourse.MaxStudents"></Input>
+            </AntDesign.Col>
+            <AntDesign.Col Span="12">
+                <Text>TeachingMethod</Text>
+                <Input Placeholder="授课形式" @bind-Value="@AddCourse.TeachingMethod"></Input>
+            </AntDesign.Col>
+        </Row>
+        <br />
+        <Row>
+            <AntDesign.Col Span="18">
+
+            </AntDesign.Col>
+            <AntDesign.Col Span="6">
+                <Button Type="default" @onclick="_=>AddClose()">取消</Button>
+                <Button Type="primary" @onclick="_=>Add()">提交</Button>
+            </AntDesign.Col>
+        </Row>
+    </Template>
+</Drawer>
 
 
 @code {
@@ -140,6 +157,7 @@
     private List<Course>? _course { get; set; }
 
     private bool _isSee { get; set; } = false;
+    private bool _isAddSee { get; set; } = false;
 
     MessageConfig config = new MessageConfig()
         {
@@ -182,10 +200,10 @@
 
         var jsonContent = new
         {
-            index = PaginationStudent.Index,
-            pageSize = PaginationStudent.PageSize,
+            index = Pagination.Index,
+            pageSize = Pagination.PageSize,
             name = "",
-            teacherId = 0
+            teacherId = Pagination.TeacherId
         };
 
         var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
@@ -200,7 +218,7 @@
         var courseResponse = JsonSerializer.Deserialize<ReCourse>(jsonResponse);
 
         _course = courseResponse!.lsCourse;
-        PaginationStudent.Total = (int)courseResponse.total!;
+        Pagination.Total = (int)courseResponse.total!;
 
         config.Content = "加载成功！";
         config.Duration = 1;
@@ -210,85 +228,71 @@
 
     private async Task Callback(PaginationEventArgs obj)
     {
-        PaginationStudent.Index = obj.Page;
+        Pagination.Index = obj.Page;
         await LoadTeacherData();
     }
 
     private async Task LoadTeacherData()
     {
-        // var response = await GetStudentInfo();
-        // await TableInit(response);
+        var response = await GetInfo();
+        await TableInit(response);
     }
 
-    void Open()
+    void Open(Course c)
     {
-        // EditClass.id = student.studentId;
-        // EditClass.name = student.name;
-        // EditClass.gender = student.gender;
-        // EditClass.email = student.email;
-        // EditClass.phoneNumber = student.phoneNumber;
-        // EditClass.address = student.address;
-        // EditClass.major = student.major;
-        // EditClass.enrollmentStatus = student.enrollmentStatus;
-        // EditClass.department = student.department;
-        // EditClass.joining = student.joining;
-        // EditClass.status = student.status;
+        EditClass.courseId = c.courseId;
+        EditClass.teacherId = c.teacherId;
+        EditClass.teacherName = c.teacherName;
 
         this._isSee = true;
     }
 
     void Close()
     {
-        // EditClass.id = null;
-        // EditClass.name = null;
-        // EditClass.gender = null;
-        // EditClass.email = null;
-        // EditClass.phoneNumber = null;
-        // EditClass.address = null;
-        // EditClass.major = null;
-        // EditClass.enrollmentStatus = null;
-        // EditClass.department = null;
-        // EditClass.joining = null;
-        // EditClass.joining = null;
-        // this._isSee = false;
+        EditClass.courseId = null;
+        EditClass.teacherId = null;
+        EditClass.teacherName = null;
+        
+        this._isSee = false;
     }
 
     private async Task Edit()
     {
-        // _message.Loading(config1);
-        // var url = $"{Ip}/api/Students/EditStudents";
-        // using var client = new HttpClient();
-        // client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+        _message.Loading(config1);
+        var url = $"{Ip}/api/Course/DesignatedTeacher";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
-        // var teacher = new
-        // {
-        //     // id = EditClass.id,
-        //     // gender = EditClass.gender,
-        //     // phoneNumber = EditClass.phoneNumber,
-        //     // address = EditClass.address,
-        //     // major = EditClass.major,
-        //     // enrollmentStatus = EditClass.enrollmentStatus,
-        //     // department = EditClass.department,
-        //     // status = EditClass.status
-        // };
-        // var json = JsonSerializer.Serialize(teacher);
-        // var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var data = new
+        {
+            coursesId = EditClass.courseId,
+            teacherId = EditClass.teacherId,
+            name = EditClass.teacherName
+        };
+        var json = JsonSerializer.Serialize(data);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        // var response = await client.PostAsync(url, content);
+        var response = await client.PostAsync(url, content);
 
-        // if (response.IsSuccessStatusCode)
-        // {
-        //     config1.Content = "处理成功!";
-        //     config1.Duration = 1;
-        //     await _message.Success(config1);
-        //     Close();
-        //     await LoadTeacherData();
-        // }
+        if (response.IsSuccessStatusCode)
+        {
+            config1.Content = "处理成功!";
+            config1.Duration = 1;
+            await _message.Success(config1);
+            Close();
+            await LoadTeacherData();
+        }
+        else
+        {
+            config1.Content = "教师信息错误";
+            config1.Duration = 1;
+            await _message.Error(config1);
+        }
     }
 
     private async Task Delete(int id)
     {
-        var url = $"{Ip}/api/Teachers/DeleteTeachers?id={id}";
+        var url = $"{Ip}/api/Course/DelCourse?id={id}";
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
@@ -300,6 +304,66 @@
         }
     }
 
+    private async Task Add()
+    {
+        _message.Loading(config1);
+
+        var url = $"{Ip}/api/Course/AddCourse";
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var data = new
+        {
+            name = AddCourse.Name,
+            classTime=AddCourse.ClassTime,
+            classroom=AddCourse.Classroom,
+            description=AddCourse.Description,
+            credits=AddCourse.Credits,
+            type=AddCourse.Type,
+            maxStudents=AddCourse.MaxStudents,
+            teachingMethod=AddCourse.TeachingMethod
+        };
+        var json = JsonSerializer.Serialize(data);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync(url, content);
+
+        if (response.IsSuccessStatusCode)
+        {
+            config1.Content = "处理成功!";
+            config1.Duration = 1;
+            await _message.Success(config1);
+            AddClose();
+            await LoadTeacherData();
+        }
+    }
+    private void AddOpen()
+    {
+        AddCourse.Name = "";
+        AddCourse.ClassTime = null;
+        AddCourse.Classroom = null;
+        AddCourse.Credits = 0;
+        AddCourse.Description = null;
+        AddCourse.MaxStudents = 0;
+        AddCourse.TeachingMethod = null;
+        AddCourse.Type = null;
+
+        _isAddSee = true;
+    }
+
+    private void AddClose()
+    {
+        AddCourse.Name = "";
+        AddCourse.ClassTime = null;
+        AddCourse.Classroom = null;
+        AddCourse.Credits = 0;
+        AddCourse.Description = null;
+        AddCourse.MaxStudents = 0;
+        AddCourse.TeachingMethod = null;
+        AddCourse.Type = null;
+
+        _isAddSee = false;
+    }
     private class ReCourse
     {
         public List<Course> lsCourse { get; set; }
@@ -326,11 +390,7 @@
 
     }
 
-
-
-
-
-    private static class PaginationStudent
+    private static class Pagination
     {
         public static int Index { get; set; } = 1;
         public static int Total { get; set; }
@@ -340,21 +400,23 @@
 
     }
 
-
     private static class EditClass
     {
-        // public static int? id { get; set; }
-        // public static string? name { get; set; }
-        // public static string? gender { get; set; }
-        // public static string? email { get; set; }
-        // public static long? phoneNumber { get; set; }
-        // public static string? address { get; set; }
-        // public static string? major { get; set; }
-        // public static string? enrollmentStatus { get; set; }
-        // public static string? department { get; set; }
-        // public static string? joining { get; set; }
-        // public static string? status { get; set; }
+        public static int? courseId { get; set; }
+        public static int? teacherId { get; set; }
+        public static string? teacherName { get; set; }
+    }
 
+    private static class AddCourse
+    {
+        public static string Name { get; set; }
+        public static string? ClassTime { get; set; }
+        public static string? Classroom { get; set; }
+        public static string? Description { get; set; }
+        public static float Credits { get; set; }
+        public static string? Type { get; set; }
+        public static int MaxStudents { get; set; }
+        public static string? TeachingMethod { get; set; }
     }
 }
 
