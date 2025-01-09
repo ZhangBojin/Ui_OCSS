@@ -1,7 +1,124 @@
 ﻿@page "/Teacher/Course"
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject IConfiguration Configuration
+@inject IMessageService _message
 
-<h3>Course_Teacher</h3>
+
+<PageHeader Class="site-page-header" Title="Course" Subtitle="所属课程" />
+
+<div style="background-color: #ececec; padding: 20px;">
+    <div class="card-row">
+        @if (Courses != null && !(Courses.Count <= 0))
+        {
+            @foreach (var course in Courses.Select((value, index) => new { value, index }))
+            {
+                <div class="card-column">
+                    <Card Bordered="false" Title=@(course.value.name)>
+                        <Extra> <a slot="extra" href="#">进入课程</a> </Extra>
+                        <ChildContent>
+                            @course.value.description
+                        </ChildContent>
+                    </Card>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .card-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px; /* 设置卡片之间的间距为视口宽度的2% */
+    }
+
+    .card-column {
+        flex: 1 1 25vw; /* 设置每个卡片占据视口宽度的30% */
+        max-width: 25vw; /* 设置最大宽度为视口宽度的30% */
+    }
+</style>
+
+
+
 
 @code {
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
+    private bool _hasLoadedData = false;
 
+    private List<Course>? Courses { get; set; }
+
+    MessageConfig config = new MessageConfig()
+        {
+            Content = "加载数据中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasLoadedData)
+        {
+            await LoadConfiguration();
+            await GetInfo();
+            StateHasChanged();
+            _hasLoadedData = true;
+        }
+    }
+
+    private async Task LoadConfiguration()
+    {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
+    }
+
+    private async Task GetInfo()
+    {
+        await _message.Loading(config);
+
+        var url = $"{Ip}/api/Course/CoursesUnderTeachers";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Courses = JsonSerializer.Deserialize<List<Course>>(await response.Content.ReadAsStringAsync());
+
+            config.Content = "加载成功！";
+            config.Duration = 1;
+            await _message.Success(config);
+        }
+
+        config.Content = "加载失败！";
+        config.Duration = 1;
+        await _message.Error(config);
+    }
+
+
+    private class Course
+    {
+        public int? id { get; set; }
+        public int? coursesId { get; set; }
+        public int? currentNum { get; set; }
+        public int? totalNum { get; set; }
+        public int? courseId { get; set; }
+        public string? name { get; set; }
+        public string? classTime { get; set; }
+        public string? classroom { get; set; }
+        public string? description { get; set; }
+        public int? credits { get; set; }
+        public string? type { get; set; }
+        public int? maxStudents { get; set; }
+        public string? teachingMethod { get; set; }
+        public int? teacherId { get; set; }
+        public string? teacherName { get; set; }
+
+    }
 }

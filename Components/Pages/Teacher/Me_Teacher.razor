@@ -1,0 +1,98 @@
+﻿@page "/Teacher/Me"
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject IConfiguration Configuration
+@inject IMessageService _message
+
+<PageHeader Class="site-page-header" Title="Me" Subtitle="我的" />
+
+<div style="padding:50px">
+    @if (mySelf != null)
+    {
+        <Descriptions Title="我的信息" Bordered>
+            <DescriptionsItem Title="ID">@mySelf.id</DescriptionsItem>
+            <DescriptionsItem Title="工号" Span="3">@mySelf.teacherId</DescriptionsItem>
+            <DescriptionsItem Title="姓名">@mySelf.name</DescriptionsItem>
+            <DescriptionsItem Title="性别">@mySelf.gender</DescriptionsItem>
+            <DescriptionsItem Title="邮箱">@mySelf.email</DescriptionsItem>
+            <DescriptionsItem Title="电话">@mySelf.phoneNumber</DescriptionsItem>
+            <DescriptionsItem Title="职称">@mySelf.title</DescriptionsItem>
+            <DescriptionsItem Title="所属学院">@mySelf.department</DescriptionsItem>
+            <DescriptionsItem Title="入职时间">@mySelf.joining</DescriptionsItem>
+        </Descriptions>
+    }
+</div>
+
+@code {
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
+    private bool _hasLoadedData = false;
+
+    private MySelf? mySelf{ get; set; }
+
+    MessageConfig config = new MessageConfig()
+    {
+        Content = "加载数据中...",
+        Key = $"updatable-{DateTime.Now.Ticks}"
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasLoadedData)
+        {
+            await LoadConfiguration();
+            await GetInfo();
+            StateHasChanged();
+            _hasLoadedData = true;
+        }
+    }
+
+    private async Task LoadConfiguration()
+    {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
+    }
+
+    private async Task GetInfo()
+    {
+        await _message.Loading(config);
+
+        var url = $"{Ip}/api/Teachers/GetTeacherSelfInfo";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            mySelf = JsonSerializer.Deserialize<MySelf>(await response.Content.ReadAsStringAsync())!;
+
+            config.Content = "加载成功！";
+            config.Duration = 1;
+            await _message.Success(config);
+        }
+
+        config.Content = "加载失败！";
+        config.Duration = 1;
+        await _message.Error(config);
+    }
+
+    private class MySelf
+    {
+        public int id { get; set; }
+        public int teacherId { get; set; }
+        public int userId { get; set; }
+        public string? name { get; set; }
+        public string? gender { get; set; }
+        public string? email { get; set; }
+        public long phoneNumber { get; set; }
+        public string? title { get; set; }
+        public string? department { get; set; }
+        public string? joining { get; set; }
+
+    }
+}
