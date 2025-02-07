@@ -1,8 +1,10 @@
-﻿@using Blazored.LocalStorage
-@using Ui_OCSS.Infrastructure.HeartbeatService
+﻿@using System.Net.Http.Headers
+@using Blazored.LocalStorage
 @inherits LayoutComponentBase
-@inject HeartbeatService HeartbeatService
 @inject ILocalStorageService LocalStorage
+@implements IAsyncDisposable
+@inject IConfiguration Configuration
+
 
 
 <div class="page">
@@ -30,16 +32,58 @@
 
 
 @code{
-    private string? Token { get; set; }
-    public static string Number { get; set; } = "1";
+    public string Number { get; set; }
+    CancellationTokenSource cts { get; set; } = new CancellationTokenSource();
 
+    [Inject] private HttpClient HttpClient { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private Timer? heartbeatTimer;  // 存储定时器
+
+    public ValueTask DisposeAsync()
     {
-        if (firstRender)
+        cts.Cancel();
+        cts.Dispose();
+        heartbeatTimer?.Dispose();
+        return default;
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        // 每次渲染都会创建新的定时器
+        heartbeatTimer?.Dispose();
+        var ctsToken = cts.Token;
+
+        heartbeatTimer = new Timer(async _ => await SendHeartbeat(ctsToken), null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+        return Task.CompletedTask;
+    }
+
+    private async Task SendHeartbeat(CancellationToken cancellationToken)
+    {
+
+        var token = (await LocalStorage.GetItemAsync<string>("jwtToken", cancellationToken))!;
+        var ip = Configuration.GetSection("Ip")["ApiGateWay"];
+
+        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        try
         {
-            Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
-            HeartbeatService.StartPolling(Token);
+            var response = await HttpClient.GetAsync($"{ip}/api/Heartbeat/OnlineHeartbeat", cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                await InvokeAsync(() =>
+                {
+                    Number = responseContent;
+                    StateHasChanged();  // 强制触发 UI 更新
+                });
+            }
         }
+        catch (Exception e)
+        {
+            return;
+        }
+
+       
     }
 }

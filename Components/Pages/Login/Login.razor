@@ -132,7 +132,6 @@
                 await _message.Success("登录成功！");
 
                 await LocalStorage.SetItemAsync("jwtToken", token);
-                //var a = await localStorage.GetItemAsync<string>("jwtToken");
                 Navigation.NavigateTo(@MenuService.MenuItems[0].Href);
             }
         }

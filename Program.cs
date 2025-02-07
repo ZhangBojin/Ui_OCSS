@@ -1,8 +1,6 @@
 using Blazored.LocalStorage;
 using Ui_OCSS.Components;
 using Ui_OCSS.Components.Layout;
-using Ui_OCSS.Infrastructure.HeartbeatService;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,11 +14,6 @@ builder.Services.AddHttpClient();
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddSingleton<MenuService>();
-
-#region ÐÄÌø
-builder.Services.AddSingleton<HeartbeatService>();
-builder.Services.AddHostedService<HeartbeatService>();
-#endregion
 
 var app = builder.Build();
 
