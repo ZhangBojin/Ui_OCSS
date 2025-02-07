@@ -70,6 +70,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+         _message.Loading(config);
+
         if (firstRender && !_hasLoadedData)
         {
             await LoadConfiguration();
@@ -78,6 +80,10 @@
             _hasLoadedData = true;
             StateHasChanged();
         }
+
+        config.Content = "加载完成！";
+        config.Duration = 1;
+        await _message.Success(config);
     }
 
     private async Task LoadConfiguration()
@@ -89,8 +95,6 @@
 
     private async Task GetStudentInfo()
     {
-        await _message.Loading(config);
-
         var url = $"{Ip}/api/Students/GetStudentInfo";
 
         using var httpClient = new HttpClient();
@@ -100,23 +104,12 @@
 
         if (response.IsSuccessStatusCode)
         {
-            var a = await response.Content.ReadAsStringAsync();
             mySelf = JsonSerializer.Deserialize<MySelf>(await response.Content.ReadAsStringAsync())!;
-
-            config.Content = "加载成功！";
-            config.Duration = 1;
-            await _message.Success(config);
         }
-
-        config.Content = "加载失败！";
-        config.Duration = 1;
-        await _message.Error(config);
     }
 
     private async Task GetMyCourseInfo()
     {
-        await _message.Loading(config);
-
         var url = $"{Ip}/api/CourseSelection/GetMyCourse";
 
         using var httpClient = new HttpClient();
@@ -127,15 +120,7 @@
         if (response.IsSuccessStatusCode)
         {
             myCourse = JsonSerializer.Deserialize<List<MyCourseInfo>>(await response.Content.ReadAsStringAsync())!;
-
-            config.Content = "加载成功！";
-            config.Duration = 1;
-            await _message.Success(config);
         }
-
-        config.Content = "加载失败！";
-        config.Duration = 1;
-        await _message.Error(config);
     }
 
     private class MySelf

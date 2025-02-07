@@ -61,6 +61,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        _message.Loading(config);
+
         if (firstRender && !_hasLoadedData)
         {
             await LoadConfiguration();
@@ -68,6 +70,9 @@
             StateHasChanged();
             _hasLoadedData = true;
         }
+        config.Content = "加载完成！";
+        config.Duration = 1;
+        await _message.Success(config);
     }
 
     private async Task LoadConfiguration()
@@ -78,7 +83,6 @@
 
     private async Task GetInfo()
     {
-        await _message.Loading(config);
 
         var url = $"{Ip}/api/Course/CoursesUnderTeachers";
 
@@ -91,14 +95,7 @@
         {
             Courses = JsonSerializer.Deserialize<List<Course>>(await response.Content.ReadAsStringAsync());
 
-            config.Content = "加载成功！";
-            config.Duration = 1;
-            await _message.Success(config);
         }
-
-        config.Content = "加载失败！";
-        config.Duration = 1;
-        await _message.Error(config);
     }
 
 
