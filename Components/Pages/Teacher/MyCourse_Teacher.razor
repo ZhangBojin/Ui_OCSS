@@ -1,0 +1,14 @@
+﻿@page "/Teacher/MyCourse"
+
+
+@if (_hasLoadedData)
+{
+    <PageHeader Class="site-page-header" Title="导弹装配与维修" Subtitle="Missile assembly and maintenance" />
+    <Divider />
+}
+
+@code {
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
+    private bool _hasLoadedData = true;
+}
