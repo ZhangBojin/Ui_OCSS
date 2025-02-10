@@ -1,0 +1,184 @@
+﻿@page "/Student/CourseSel"
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@using Blazored.LocalStorage
+@inject IConfiguration Configuration
+@inject ILocalStorageService LocalStorage
+@inject IMessageService _message
+
+
+<GridRow>
+    <GridCol Span="12">
+        <PageHeader Class="site-page-header" Title="选课" Subtitle="下列为待选课程" />
+    </GridCol>
+    <GridCol Span="12" style="display: flex; justify-content: flex-end;">
+
+    </GridCol>
+    <GridCol Span="4">
+
+    </GridCol>
+    <GridCol Span="17" Style="width:100%;text-align:right;">
+
+    </GridCol>
+</GridRow>
+<GridRow>
+    <GridCol Span="24" Style="height:100vh;">
+        <Table TItem="Course" DataSource="_course" @bind-PageSize="Pagination.PageSize">
+            <ChildContent Context="data">
+                @foreach (var column in _columns)
+                {
+                    <Column TData="object" DataIndex="@column"></Column>
+                }
+                <ActionColumn Title="Action">
+                    <Space Size=@("middle")>
+                        <SpaceItem>
+                            <Popconfirm Placement="@Placement.Bottom" Title="确定选择这门课程吗？" OnConfirm="_=>_confirm((int)data.courseId!)">
+                                <Button Type="@ButtonType.Primary">点击选课</Button>
+
+                            </Popconfirm>
+                        </SpaceItem>
+                    </Space>
+                </ActionColumn>
+            </ChildContent>
+            <PaginationTemplate>
+                <Pagination Total="Pagination.Total"
+                ShowSizeChanger="false"
+                PageSize="Pagination.PageSize"
+                Current="Pagination.Index"
+                OnChange="Callback" />
+            </PaginationTemplate>
+        </Table>
+    </GridCol>
+</GridRow>
+
+@code {
+    private string? Token { get; set; }
+    private string? Ip { get; set; }
+    private bool _hasLoadedData = false;
+    readonly string[] _columns = ["CoursesId", "Name", "ClassTime", "Classroom", "Description", "Credits", "Type", "TeachingMethod", "TeacherId", "TeacherName", "CurrentNum", "MaxStudents"];
+
+    private List<Course>? _course { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_hasLoadedData)
+        {
+            await LoadConfiguration();
+            await LoadData();
+            StateHasChanged();
+            _hasLoadedData = true;
+        }
+    }
+
+    private async Task LoadConfiguration()
+    {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
+    }
+    private async Task Callback(PaginationEventArgs obj)
+    {
+        Pagination.Index = obj.Page;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var config = new MessageConfig()
+        {
+            Content = "加载中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+        _message.Loading(config);
+
+        var url = $"{Ip}/api/Course/PaginationList";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var jsonContent = new
+        {
+            index = Pagination.Index,
+            pageSize = Pagination.PageSize,
+            name = "",
+            teacherId = (int?)null
+        };
+
+        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(url, content);
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var courseResponse = JsonSerializer.Deserialize<ReCourse>(jsonResponse);
+
+        _course = courseResponse!.lsCourse;
+        Pagination.Total = (int)courseResponse.total!;
+
+        config.Content = "加载成功！"; 
+        config.Duration = 1;
+        await _message.Success(config);
+    }
+
+    private async Task _confirm(int id)
+    {
+        var config1 = new MessageConfig()
+        {
+            Content = "处理中...",
+            Key = $"updatable-{DateTime.Now.Ticks}"
+        };
+
+        _message.Loading(config1);
+
+        var url = $"{Ip}/api/CourseSelection/SelectConfirm?id={id}";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var jsonContent = new{};
+
+        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(jsonContent), Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(url, content);
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+        config1.Content = jsonResponse;
+        config1.Duration = 1;
+        await _message.Success(config1);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadData();
+        }
+    }
+
+    private static class Pagination
+    {
+        public static int Index { get; set; } = 1;
+        public static int Total { get; set; }
+        public static int PageSize { get; set; } = 10;
+    }
+    private class Course
+    {
+        public int? id { get; set; }
+        public int? coursesId { get; set; }
+        public int? currentNum { get; set; }
+        public int? totalNum { get; set; }
+        public int? courseId { get; set; }
+        public string? name { get; set; }
+        public string? classTime { get; set; }
+        public string? classroom { get; set; }
+        public string? description { get; set; }
+        public int? credits { get; set; }
+        public string? type { get; set; }
+        public int? maxStudents { get; set; }
+        public string? teachingMethod { get; set; }
+        public int? teacherId { get; set; }
+        public string? teacherName { get; set; }
+
+    }
+    private class ReCourse
+    {
+        public List<Course> lsCourse { get; set; }
+        public int? total { get; set; }
+    }
+}

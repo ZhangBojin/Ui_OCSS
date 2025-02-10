@@ -37,17 +37,31 @@
                 <p>3.2025年上半学期选课将于4月15日8点整开始，请同学们做好准备。</p>
             </ChildContent>
         </Card>
-
-        @foreach (var course in myCourse ?? [])
+        
+        @if (myCourse is { Count: < 1 })
         {
             <Card Bordered="false" Title=@($"我的选课") Style="width: 45%">
                 <ChildContent>
-                    <p>当前已选课程： "@course.name" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        <a href=@($"/course/{course.id}") target="_blank">查看详情</a>
+                    <p>
+                        当前暂无已选课程！
                     </p>
                 </ChildContent>
             </Card>
         }
+        else
+        {
+            @foreach (var course in myCourse)
+            {
+                <Card Bordered="false" Title=@($"我的选课") Style="width: 45%">
+                    <ChildContent>
+                        <p>当前已选课程： "@course.name" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            <a href=@($"/Student/MyCourse") target="_blank">查看详情</a>
+                        </p>
+                    </ChildContent>
+                </Card>
+            }
+        }
+       
     </div>
 }
 
