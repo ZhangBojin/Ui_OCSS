@@ -19,30 +19,34 @@
     private string? Ip { get; set; }
     private bool _hasLoadedData = false;
 
+    private List<StdInfo>? StdInfos { get; set; }
+    private CourseInfo? courseInfo { get; set; }
+
+
+
     [Parameter]
     public int CourseId { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var config = new MessageConfig()
+        if (firstRender && !_hasLoadedData)
+        { var config = new MessageConfig()
             {
                 Content = "加载数据中...",
                 Key = $"updatable-{DateTime.Now.Ticks}"
             };
-        _message.Loading(config);
+            _message.Loading(config);
 
-        if (firstRender && !_hasLoadedData)
-        {
             await LoadConfiguration();
-            await GetInfo(CourseId);
+            await GetCourseInfo(CourseId);
+            await GetStuInfo(CourseId);
             _hasLoadedData = true;
             StateHasChanged();
 
+            config.Content = "加载完成！";
+            config.Duration = 1;
+            await _message.Success(config);
         }
-
-        config.Content = "加载完成！";
-        config.Duration = 1;
-        await _message.Success(config);
     }
 
     private async Task LoadConfiguration()
@@ -51,7 +55,7 @@
         Ip = Configuration.GetSection("Ip")["ApiGateWay"];
     }
 
-    private async Task GetInfo(int courseId)
+    private async Task GetStuInfo(int courseId)
     {
         var url = $"{Ip}/api/Course/GetStudentsInCoursesITeach?courseId={courseId}";
 
@@ -62,7 +66,43 @@
 
         if (response.IsSuccessStatusCode)
         {
-            var data = await response.Content.ReadAsStringAsync();
+            StdInfos = JsonSerializer.Deserialize<List<StdInfo>>(await response.Content.ReadAsStringAsync());
         }
+    }
+
+    private async Task GetCourseInfo(int courseId)
+    {
+        var url = $"{Ip}/api/Course/GetCourseInfo?courseId={courseId}";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            courseInfo = JsonSerializer.Deserialize<CourseInfo>(await response.Content.ReadAsStringAsync());
+        }
+    }
+
+    private class StdInfo
+    {
+        public int userId { get; set; }
+        public int studentId { get; set; }
+        public string? name { get; set; }
+        public string? gender { get; set; }
+        public string? major { get; set; }
+        public string? email { get; set; }
+
+        public float? grade { get; set; }
+        public bool? isPass { get; set; }
+    }
+
+    private class CourseInfo
+    {
+        public int id { get; set; }
+        public string? name { get; set; }
+        public string? teacherName { get; set; }
+        public float? credits { get; set; }
     }
 }
