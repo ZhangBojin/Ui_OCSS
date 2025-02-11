@@ -10,8 +10,19 @@
 
 @if (_hasLoadedData)
 {
-    <PageHeader Class="site-page-header" Title="导弹装配与维修" Subtitle="Missile assembly and maintenance" />
+    <PageHeader Class="site-page-header" Title="@courseInfo!.name" Subtitle="@($"绩点：{courseInfo.credits}")" />
     <Divider />
+    <div>
+        <GridRow Gutter="10">
+            <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
+                左侧区域
+            </GridCol>
+            <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
+                右侧区域
+            </GridCol>
+        </GridRow>
+    </div>
+
 }
 
 @code {
@@ -22,9 +33,6 @@
     private List<StdInfo>? StdInfos { get; set; }
     private CourseInfo? courseInfo { get; set; }
 
-
-
-    [Parameter]
     public int CourseId { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

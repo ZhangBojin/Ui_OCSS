@@ -59,6 +59,10 @@
             }
         </div>
     }
+    else
+    {
+        <h10>暂无</h10>
+    }
 
     <Drawer Closable="true" Width="20vw" Visible="IsEdiOpen"  Title='("提交成绩")' OnClose="_=>OnEditClickedClose()">
         <Template style="height:90%">
@@ -150,7 +154,9 @@
 
         if (response.IsSuccessStatusCode)
         {
-            StdInfos = JsonSerializer.Deserialize<List<StdInfo>>(await response.Content.ReadAsStringAsync());
+            var data = await response.Content.ReadAsStringAsync();
+            if(data==string.Empty) return;
+            StdInfos = JsonSerializer.Deserialize<List<StdInfo>>(data);
         }
     }
 
