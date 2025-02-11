@@ -6,6 +6,8 @@
 @inject IConfiguration Configuration
 @inject ILocalStorageService LocalStorage
 @inject IMessageService _message
+@inject NavigationManager Navigation
+
 
 
 <GridRow>
@@ -147,7 +149,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            await LoadData();
+            Navigation.NavigateTo("/Student/MyCourse");
         }
     }
 

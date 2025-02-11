@@ -59,14 +59,13 @@
 
     private async Task SendHeartbeat(CancellationToken cancellationToken)
     {
-
-        var token = (await LocalStorage.GetItemAsync<string>("jwtToken", cancellationToken))!;
-        var ip = Configuration.GetSection("Ip")["ApiGateWay"];
-
-        HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
         try
         {
+            var token = (await LocalStorage.GetItemAsync<string>("jwtToken", cancellationToken))!;
+            var ip = Configuration.GetSection("Ip")["ApiGateWay"];
+
+            HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
             var response = await HttpClient.GetAsync($"{ip}/api/Heartbeat/OnlineHeartbeat", cancellationToken);
 
             if (response.IsSuccessStatusCode)

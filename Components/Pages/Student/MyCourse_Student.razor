@@ -1,14 +1,68 @@
 ﻿@page "/Student/MyCourse"
+@inject IMessageService _message
+@using System.Net.Http.Headers
+@using System.Text.Json
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject IConfiguration Configuration
+
 
 
 @if (_hasLoadedData)
 {
-    <PageHeader Class="site-page-header" Title="导弹装配与维修" Subtitle="Missile assembly and maintenance"/>
-    <Divider/>
+    <PageHeader Class="site-page-header" Title="导弹装配与维修" Subtitle="Missile assembly and maintenance" />
+    <Divider />
 }
 
 @code {
     private string? Token { get; set; }
     private string? Ip { get; set; }
-    private bool _hasLoadedData = true;
+    private bool _hasLoadedData = false;
+
+    [Parameter]
+    public int CourseId { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var config = new MessageConfig()
+            {
+                Content = "加载数据中...",
+                Key = $"updatable-{DateTime.Now.Ticks}"
+            };
+        _message.Loading(config);
+
+        if (firstRender && !_hasLoadedData)
+        {
+            await LoadConfiguration();
+            await GetInfo(CourseId);
+            _hasLoadedData = true;
+            StateHasChanged();
+
+        }
+
+        config.Content = "加载完成！";
+        config.Duration = 1;
+        await _message.Success(config);
+    }
+
+    private async Task LoadConfiguration()
+    {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
+    }
+
+    private async Task GetInfo(int courseId)
+    {
+        var url = $"{Ip}/api/Course/GetStudentsInCoursesITeach?courseId={courseId}";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var data = await response.Content.ReadAsStringAsync();
+        }
+    }
 }

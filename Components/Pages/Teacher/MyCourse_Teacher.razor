@@ -1,14 +1,250 @@
-﻿@page "/Teacher/MyCourse"
+﻿@page "/Teacher/MyCourse/{CourseId:int}"
+@inject IMessageService _message
+@using System.Net.Http.Headers
+@using System.Text
+@using System.Text.Json
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject IConfiguration Configuration
+
 
 
 @if (_hasLoadedData)
 {
-    <PageHeader Class="site-page-header" Title="导弹装配与维修" Subtitle="Missile assembly and maintenance" />
+    <PageHeader Class="site-page-header" Title="@courseInfo!.name" Subtitle="@($"绩点：{courseInfo.credits}")" />
+
     <Divider />
+    <h10 style="font-weight: bold;">教师：@courseInfo.teacherName</h10>
+    <br />
+    <br />
+
+    <h10 style="font-weight: bold;">学生：</h10>
+    @if (StdInfos != null && !(StdInfos.Count <= 0))
+    {
+        <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+            @foreach (var stdInfo in StdInfos.Select((value, index) => new { value, index }))
+            {
+                <Card Style="width:300px;">
+                    <ChildContent>
+                        <CardMeta Title="@($"学号：{stdInfo.value.studentId}")" />
+                        <div style="display: flex; align-items: center;">
+                            <span>姓名：</span>
+                            <CardMeta Description="@($"{stdInfo.value.name}")" Style="color: blue;" />
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            性别：<CardMeta Description="@($"{stdInfo.value.gender}")" />
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            专业：<CardMeta Description="@($"{stdInfo.value.major}")" />
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            邮件：<CardMeta Description="@($"{stdInfo.value.email}")" />
+                        </div>
+                        <br/>
+                        <div style="display: flex; align-items: center;">
+                            绩点：<CardMeta Description="@($"{stdInfo.value.grade}")" />
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            是否通过：<CardMeta Description="@(stdInfo.value.isPass == null ? "" : ((bool)stdInfo.value.isPass ? "通过" : "挂科"))"
+                                           Style=@(stdInfo.value.isPass == null ? "" : ((bool)stdInfo.value.isPass ? "color: green;" : "color: red;")) />
+                                          
+                        </div>
+
+                    </ChildContent>
+                    <ActionTemplate>
+                        <CardAction>提交成绩：</CardAction>
+                        <CardAction><Icon Type="@IconType.Outline.Edit" OnClick="@(() => OnEditClickedOpen(stdInfo.value.studentId,stdInfo.value.name!,stdInfo.value.userId))" /></CardAction>
+                    </ActionTemplate>
+                </Card>
+            }
+        </div>
+    }
+
+    <Drawer Closable="true" Width="20vw" Visible="IsEdiOpen"  Title='("提交成绩")' OnClose="_=>OnEditClickedClose()">
+        <Template style="height:90%">
+            <div>
+                学号：@StuNum
+                <br/>
+                <br/>
+                姓名：@Name
+                <br/>
+                <br/>
+                <br/>
+                是否通过：<Switch @bind-Checked="IsPass"/>
+                <br/>
+                <br/>
+                @if (IsPass)
+                {
+                    <div>
+                        绩点： <AntDesign.InputNumber Step="0.1" Min="0" Max="@((double)courseInfo!.credits!)" @bind-Value="StuCredits" />
+                        <br/>
+                        <br/>
+                    </div>
+                }
+                <Button Type="@ButtonType.Primary" OnClick="_=>UpdCourseGrade()">提交</Button>
+
+            </div>
+        </Template>
+    </Drawer>
 }
+
+
 
 @code {
     private string? Token { get; set; }
     private string? Ip { get; set; }
-    private bool _hasLoadedData = true;
+    private bool _hasLoadedData = false;
+
+    [Parameter]
+    public int CourseId { get; set; }
+
+    private List<StdInfo>? StdInfos { get; set; }
+    private CourseInfo? courseInfo { get; set; }
+
+    private bool IsEdiOpen { get; set; } = false;
+
+    private bool IsPass { get; set; } = false;
+
+    private double StuCredits { get; set; }
+
+    private int StuNum { get; set; }
+    private int UserId { get; set; }
+    private string? Name { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+
+        if (firstRender && !_hasLoadedData)
+        { var config = new MessageConfig()
+            {
+                Content = "加载数据中...",
+                Key = $"updatable-{DateTime.Now.Ticks}"
+            };
+            _message.Loading(config);
+
+            await LoadConfiguration();
+            await GetCourseInfo(CourseId);
+            await GetStuInfo(CourseId);
+            _hasLoadedData = true;
+            StateHasChanged();
+
+            config.Content = "加载完成！";
+            config.Duration = 1;
+            await _message.Success(config);
+        }
+    }
+
+    private async Task LoadConfiguration()
+    {
+        Token = (await LocalStorage.GetItemAsync<string>("jwtToken"))!;
+        Ip = Configuration.GetSection("Ip")["ApiGateWay"];
+    }
+
+    private async Task GetStuInfo(int courseId)
+    {
+        var url = $"{Ip}/api/Course/GetStudentsInCoursesITeach?courseId={courseId}";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            StdInfos = JsonSerializer.Deserialize<List<StdInfo>>(await response.Content.ReadAsStringAsync());
+        }
+    }
+
+    private async Task GetCourseInfo(int courseId)
+    {
+        var url = $"{Ip}/api/Course/GetCourseInfo?courseId={courseId}";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            courseInfo = JsonSerializer.Deserialize<CourseInfo>(await response.Content.ReadAsStringAsync());
+        }
+    }
+
+
+    public  void OnEditClickedOpen(int stuNum,string name,int userId)
+    {
+        this.StuNum = stuNum;
+        this.Name = name;
+        this.UserId = userId;
+        this.IsEdiOpen = true;
+    }
+
+    public  void OnEditClickedClose()
+    {
+        this.IsPass = false;
+        this.StuCredits = 0;
+
+        this.StuNum = 0;
+        this.Name = "";
+        this.UserId = 0;
+
+        this.IsEdiOpen = false;
+    }
+
+    private async Task UpdCourseGrade()
+    {
+        var data = new
+        {
+            userId = UserId,
+            coursesId = CourseId,
+            grade = StuCredits,
+            isPass = IsPass
+        };
+
+        var config = new MessageConfig()
+            {
+                Content = "提交中...",
+                Key = $"updatable-{DateTime.Now.Ticks}"
+            };
+        _message.Loading(config);
+
+        var url = $"{Ip}/api/Course/UpdCourseGrade";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(data), Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync(url, content);
+
+        config.Content = response.IsSuccessStatusCode ? "提交成功！" : "提交失败！";
+        config.Duration = 1;
+        await _message.Success(config);
+
+        await GetStuInfo(CourseId);
+        OnEditClickedClose();
+    }
+
+    private class StdInfo
+    {
+        public int userId { get; set; }
+        public int studentId { get; set; }
+        public string? name { get; set; }
+        public string? gender { get; set; }
+        public string? major { get; set; }
+        public string? email { get; set; }
+
+        public float? grade { get; set; }
+        public bool? isPass { get; set; }
+    }
+
+    private class CourseInfo
+    {
+        public int id { get; set; }
+        public string? name { get; set; }
+        public string? teacherName { get; set; }
+        public float? credits { get; set; }
+    }
 }
+
+        
