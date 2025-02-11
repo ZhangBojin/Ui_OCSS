@@ -21,10 +21,40 @@
         <div>
             <GridRow Gutter="10">
                 <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
-                    左侧区域
+                    <div style="border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; color:blue; font-weight: bold;">
+                        教师：@courseInfo.teacherName
+                    </div>
+                    <div style="border: 1px solid #ddd; padding: 10px; height:90vh">
+                        <h10>我的信息：</h10>
+                        <br/>
+                        <div style="border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column; align-items: center; ">
+                            <p>学号：@stdInfo.studentId</p>
+                            <p>姓名：@stdInfo.name</p>
+                            <p>绩点：@stdInfo.grade</p>
+                            <div style="display: flex; align-items: center;">
+                                <div>是否通过：</div>
+                                <div style="@(stdInfo.isPass == null ? "" : ((bool)stdInfo.isPass ? "color: green;" : "color: red;"))">
+                                    @(stdInfo.isPass == null ? "" : ((bool)stdInfo.isPass ? "通过" : "挂科"))
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    </div>
                 </GridCol>
                 <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
-                    右侧区域
+                    <AntList Bordered DataSource="@StdInfos">
+                        <Header>学生：</Header>
+                        <ChildContent Context="item">
+                            <ListItem>
+                                <span>学号：</span>@item.studentId
+                                <span>姓名：</span>@item.name
+                                <span>专业：</span>@item.major
+                            </ListItem>
+                        </ChildContent>
+
+                    </AntList>
                 </GridCol>
             </GridRow>
         </div>
@@ -38,6 +68,11 @@
 
     private List<StdInfo>? StdInfos { get; set; }
     private CourseInfo? courseInfo { get; set; }
+
+    private StdInfo stdInfo { get; set; }
+    private MySelf mySelf { get; set; } = null;
+
+
 
     public int? CourseId { get; set; }
 
@@ -57,6 +92,7 @@
 
             await GetCourseInfo(CourseId);
             await GetStuInfo(CourseId);
+            stdInfo = await GetMyInfo();
             _hasLoadedData = true;
             StateHasChanged();
 
@@ -126,6 +162,23 @@
 
     }
 
+    private async Task<StdInfo> GetMyInfo()
+    {
+        var url = $"{Ip}/api/Students/GetStudentInfo";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (response.IsSuccessStatusCode)
+        {
+            mySelf = JsonSerializer.Deserialize<MySelf>(await response.Content.ReadAsStringAsync())!;
+        }
+
+        return (StdInfos is { Count: < 1 } ? null : StdInfos!.First(s => s.userId == mySelf.userId && s.studentId == mySelf.studentId))!;
+    }
+
     private class StdInfo
     {
         public int userId { get; set; }
@@ -145,5 +198,17 @@
         public string? name { get; set; }
         public string? teacherName { get; set; }
         public float? credits { get; set; }
+    }
+
+    private class MySelf
+    {
+        public int userId { get; set; }
+        public int studentId { get; set; }
+        public string? name { get; set; }
+        public string? email { get; set; }
+        public long? phoneNumber { get; set; }
+        public string? address { get; set; }
+        public string? major { get; set; }
+        public string? department { get; set; }
     }
 }
