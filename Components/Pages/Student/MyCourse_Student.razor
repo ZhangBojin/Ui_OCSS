@@ -10,19 +10,25 @@
 
 @if (_hasLoadedData)
 {
-    <PageHeader Class="site-page-header" Title="@courseInfo!.name" Subtitle="@($"绩点：{courseInfo.credits}")" />
-    <Divider />
-    <div>
-        <GridRow Gutter="10">
-            <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
-                左侧区域
-            </GridCol>
-            <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
-                右侧区域
-            </GridCol>
-        </GridRow>
-    </div>
-
+    @if (courseInfo == null)
+    {
+        <h4>暂未选课，请前往选课！或者请刷新界面！</h4>
+    }
+    else
+    {
+        <PageHeader Class="site-page-header" Title="@courseInfo!.name" Subtitle="@($"绩点：{courseInfo.credits}")" />
+        <Divider />
+        <div>
+            <GridRow Gutter="10">
+                <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
+                    左侧区域
+                </GridCol>
+                <GridCol Span="12" Style="border: 1px solid #ddd; padding: 10px;">
+                    右侧区域
+                </GridCol>
+            </GridRow>
+        </div>
+    }
 }
 
 @code {
@@ -33,7 +39,7 @@
     private List<StdInfo>? StdInfos { get; set; }
     private CourseInfo? courseInfo { get; set; }
 
-    public int CourseId { get; set; }
+    public int? CourseId { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -46,6 +52,9 @@
             _message.Loading(config);
 
             await LoadConfiguration();
+
+            CourseId=await GetCourseId();
+
             await GetCourseInfo(CourseId);
             await GetStuInfo(CourseId);
             _hasLoadedData = true;
@@ -55,6 +64,7 @@
             config.Duration = 1;
             await _message.Success(config);
         }
+
     }
 
     private async Task LoadConfiguration()
@@ -63,8 +73,12 @@
         Ip = Configuration.GetSection("Ip")["ApiGateWay"];
     }
 
-    private async Task GetStuInfo(int courseId)
+    private async Task GetStuInfo(int? courseId)
     {
+        if (courseId==null)
+        {
+            return;
+        }
         var url = $"{Ip}/api/Course/GetStudentsInCoursesITeach?courseId={courseId}";
 
         using var httpClient = new HttpClient();
@@ -78,8 +92,12 @@
         }
     }
 
-    private async Task GetCourseInfo(int courseId)
+    private async Task GetCourseInfo(int? courseId)
     {
+        if (courseId == null)
+        {
+            return;
+        }
         var url = $"{Ip}/api/Course/GetCourseInfo?courseId={courseId}";
 
         using var httpClient = new HttpClient();
@@ -91,6 +109,21 @@
         {
             courseInfo = JsonSerializer.Deserialize<CourseInfo>(await response.Content.ReadAsStringAsync());
         }
+    }
+
+    private async Task<int?> GetCourseId()
+    {
+        var url = $"{Ip}/api/Course/GetMyCourseId";
+
+        using var httpClient = new HttpClient();
+        httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
+
+        var response = await httpClient.PostAsync(url, null);
+
+        if (!response.IsSuccessStatusCode) return null;
+        var data = await response.Content.ReadAsStringAsync();
+        return data == string.Empty ? null :Convert.ToInt32(data);
+
     }
 
     private class StdInfo
