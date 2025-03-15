@@ -38,7 +38,7 @@
             </ChildContent>
         </Card>
         
-        @if (myCourse is { Count: < 1 })
+        @if (myCourse is null || myCourse.Count<1)
         {
             <Card Bordered="false" Title=@($"我的选课") Style="width: 45%">
                 <ChildContent>
@@ -130,6 +130,8 @@
         httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
 
         var response = await httpClient.PostAsync(url, null);
+
+        var a = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)
         {
